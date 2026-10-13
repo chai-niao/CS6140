@@ -1,0 +1,8 @@
+Leak test. Sentence: Cuando termine mi maestría, I will invest in sustainable projects.
+Target word t = 4 ('maestría,'); all tokens after it are replaced by random ids, 3 trials.
+
+| model | causal | subwords | t (last subword) | max |diff| at positions <= t | max |diff| after t | verdict |
+|---|---|---|---|---|---|---|
+| XLM-R without mask (reference) | no | 14 | 6 | 1.73e+00 | 3.86e+00 | LEAK: prefix depends on future tokens |
+| Model A: XLM-R + causal mask | yes | 14 | 6 | 0.00e+00 | 2.25e+00 | no leak: prefix unchanged |
+| Model B: Qwen2.5-0.5B (causal by construction) | yes | 15 | 7 | 0.00e+00 | 2.23e+02 | no leak: prefix unchanged |

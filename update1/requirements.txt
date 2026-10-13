@@ -1,0 +1,12 @@
+pandas
+tqdm
+wordfreq
+jieba
+pycantonese
+fugashi
+unidic-lite
+torch
+transformers
+sentencepiece
+protobuf
+pytest
