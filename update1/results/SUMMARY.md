@@ -67,9 +67,15 @@ to improve on F1 = 0.64 and sigma = 0.05 rather than on zero.
 * Romanized Hindi: script rules do not apply, so a Hinglish word list plus English
   frequency is used; proper names are still mis-tagged, because a name unknown to the
   English frequency list looks like Hindi.
-* Latin-script pairs: names and loanwords ("fans", "meeting") are ambiguous; the neighbour
-  rule helps, and a manual audit (`lid_audit_sample.csv`, 300 words) is used to report
-  tagging accuracy.
+* Tagging accuracy, audit of 300 sampled words (`lid_audit_sample.csv`, 20 per pair, each
+  judged in context; the review was done with LLM assistance and spot-checked by the team):
+  298 of 300 correct (99.3%). By method: script 60/60, segmenter + script 60/60, frequency
+  159/160, Hinglish 19/20. The two errors are the Hindi postposition "ko" tagged English
+  next to the word "technology", and the English "era" in "a new era." tagged Spanish,
+  where "era" is also a frequent Spanish word. Four further rows are borderline (the name
+  "Kevon" in Cantonese text, the mixed token "referee" + Korean particle, "Coach" in
+  "Coach Kerr"); counting them as errors gives 98.0%. Names and loanwords therefore remain
+  the main source of noise, as expected.
 * Cantonese and Hindi show the highest switch rates (21%, 24%) with many 1 to 2 word bursts;
   part of that is tagger noise rather than real switching.
 * Subword alignment: labels must sit on the last subword of a word; the two tokenizers cut
