@@ -12,10 +12,17 @@ Two views of the same labelled conversations:
   iter_prefixes        inference / demo view. Yields the growing prefix one word at a
                        time, exactly like a keyboard receiving words.
 
-Subword alignment: each word is tokenized with the model's own tokenizer. Every subword
-inherits the language of its word (`lang_ids`). The prediction labels y_sw / y_dur sit on
-the LAST subword of each word, because that is the first position where the whole word
-has been seen; all other subwords get -1 (ignored).
+Subword alignment: each word is tokenized on its own with the model's tokenizer, so no
+subword can span two words (a merged token would let position t peek at word t+1). The
+word keeps the spacing it had in the original text (`space_before` from split.py): Latin,
+Arabic, Korean ... words get their leading space, while Mandarin, Cantonese and Japanese
+words are glued together as in the original, so the tokenizer sees natural text. Every
+subword inherits the language of its word (`lang_ids`). The prediction labels y_sw / y_dur
+sit on the LAST subword of each word, because that is the first position where the whole
+word has been seen; all other subwords get -1 (ignored).
+
+Both views start with the same BOS token (`<s>` for XLM-R; Qwen2.5 has none), so the model
+sees identical inputs during training and streaming inference.
 
 Run `python dataset.py --demo` to print an alignment table, batch shapes and a streaming
 trace with both tokenizers (XLM-R and Qwen2.5). Output also goes to results/dataloader_demo.txt.
@@ -40,9 +47,69 @@ TOKENIZERS = {"xlmr": "xlm-roberta-base", "qwen": "Qwen/Qwen2.5-0.5B"}
 def get_tokenizer(name_or_key: str):
     from transformers import AutoTokenizer
 
-    name = TOKENIZERS.get(name_or_key, name_or_key)
-    kwargs = {"add_prefix_space": True} if "qwen" in name.lower() else {}
-    return AutoTokenizer.from_pretrained(name, **kwargs)
+    return AutoTokenizer.from_pretrained(TOKENIZERS.get(name_or_key, name_or_key))
+
+
+def bos_id(tok) -> int | None:
+    """Token put in front of every window and every streaming prefix (None for Qwen2.5)."""
+    return tok.bos_token_id if tok.bos_token_id is not None else tok.cls_token_id
+
+
+class WordEncoder:
+    """Tokenizes one word at a time, with or without the space in front of it.
+
+    SentencePiece tokenizers (XLM-R) mark a preceding space with "▁" and add it to every
+    string they encode, so a word that follows without a space is encoded by the subword
+    model directly, bypassing that pre-tokenizer. Byte-level BPE tokenizers (Qwen2.5)
+    encode the space as part of the next token, so the space is simply written in front.
+    """
+
+    def __init__(self, tok):
+        self.tok = tok
+        first = tok.convert_ids_to_tokens(tok("hello", add_special_tokens=False)["input_ids"])[0]
+        self.metaspace = first.startswith("▁")
+        self.cache: dict[tuple[str, bool], list[int]] = {}
+
+    def __call__(self, word: str, space: bool) -> list[int]:
+        key = (word, space)
+        if key not in self.cache:
+            if self.metaspace and not space:
+                backend = self.tok.backend_tokenizer
+                text = backend.normalizer.normalize_str(word) if backend.normalizer else word
+                ids = [t.id for t in backend.model.tokenize(text)]
+            else:
+                text = " " + word if (space and not self.metaspace) else word
+                ids = self.tok(text, add_special_tokens=False)["input_ids"]
+            self.cache[key] = ids
+        return self.cache[key]
+
+
+_ENCODERS: dict[int, WordEncoder] = {}
+
+
+def word_encoder(tok) -> WordEncoder:
+    if id(tok) not in _ENCODERS:
+        _ENCODERS[id(tok)] = WordEncoder(tok)
+    return _ENCODERS[id(tok)]
+
+
+def encode_words(words: list[str], space_before: list[bool] | None, tok) -> tuple[list[int], list[int]]:
+    """Return (input_ids, word_ids) with every word tokenized separately.
+
+    The first word is encoded as the start of a text: with "▁" for XLM-R, without a space
+    for Qwen2.5, which is what both tokenizers do with a whole sentence.
+    """
+    enc = word_encoder(tok)
+    if space_before is None:  # data written before split.py stored the spacing
+        space_before = [True] * len(words)
+    ids, wids = [], []
+    for w, (word, sp) in enumerate(zip(words, space_before)):
+        piece = enc(word, sp if w > 0 else enc.metaspace)
+        if not piece:  # a word that normalizes away entirely still needs a position for its label
+            piece = [tok.unk_token_id if tok.unk_token_id is not None else tok.eos_token_id]
+        ids.extend(piece)
+        wids.extend([w] * len(piece))
+    return ids, wids
 
 
 def lang_id(lang: str, pair: str) -> int:
@@ -52,9 +119,7 @@ def lang_id(lang: str, pair: str) -> int:
 
 def encode_conversation(conv: dict, tok) -> dict:
     """Tokenize word by word and align languages and labels to subwords."""
-    enc = tok(conv["words"], is_split_into_words=True, add_special_tokens=False)
-    ids = enc["input_ids"]
-    wids = enc.word_ids()
+    ids, wids = encode_words(conv["words"], conv.get("space_before"), tok)
     n = len(ids)
     sub_lang = [lang_id(conv["langs"][w], conv["pair"]) for w in wids]
     y_sw = [IGNORE] * n
@@ -72,7 +137,7 @@ def encode_conversation(conv: dict, tok) -> dict:
 class PrefixWindowDataset(Dataset):
     def __init__(self, convs: list[dict], tok, max_len: int = 128, stride: int = 64):
         self.items: list[dict] = []
-        bos = tok.bos_token_id if tok.bos_token_id is not None else tok.cls_token_id
+        bos = bos_id(tok)
         for conv in convs:
             e = encode_conversation(conv, tok)
             n = len(e["input_ids"])
@@ -131,10 +196,13 @@ def make_loader(convs: list[dict], tok, batch_size: int = 16, max_len: int = 128
 
 
 def iter_prefixes(conv: dict, tok):
-    """Streaming view: after each word t yield (t, prefix_ids, y_sw[t], y_dur[t])."""
+    """Streaming view: after each word t yield (t, prefix_ids, y_sw[t], y_dur[t]).
+
+    The prefix starts with the same BOS token as the training windows."""
     e = encode_conversation(conv, tok)
+    bos = [bos_id(tok)] if bos_id(tok) is not None else []
     for w, last in sorted(e["last_sub_of_word"].items()):
-        yield w, e["input_ids"][: last + 1], conv["y_sw"][w], conv["y_dur"][w]
+        yield w, bos + e["input_ids"][: last + 1], conv["y_sw"][w], conv["y_dur"][w]
 
 
 # ------------------------------------------------------------------ demo

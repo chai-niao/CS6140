@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs the Update 1 pipeline end to end. Expects the raw CSVs in ../data/SwitchLingua_text
-# (or SWITCHLINGUA_DIR) and the dependencies from requirements.txt.
+# Runs the Update 1 pipeline end to end. Loads Shelton1013/SwitchLingua_text with
+# datasets.load_dataset (gated: run `hf auth login` once) and needs requirements.txt.
 set -euo pipefail
 cd "$(dirname "$0")"
 

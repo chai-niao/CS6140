@@ -12,8 +12,9 @@ derive them here. Three strategies, chosen per pair:
           language as the fallback ("sticky" rule).
 
 Public API:
-    tokenize_and_tag(text, pair) -> list of (word, lang_code)
-    PAIRS                        -> metadata for each CSV file stem
+    tokenize_and_tag(text, pair)        -> list of (word, lang_code)
+    tokenize_and_tag_spaced(text, pair) -> list of (word, lang_code, space_before)
+    PAIRS                        -> metadata for each pair (named after the dataset files)
 """
 from __future__ import annotations
 
@@ -21,7 +22,7 @@ import re
 import unicodedata
 from functools import lru_cache
 
-# file stem -> (L1 code, L1 name, L2 code, method). L1 is the matrix language of the pair.
+# pair name -> (L1 code, L1 name, L2 code, method). L1 is the matrix language of the pair.
 PAIRS: dict[str, tuple[str, str, str, str]] = {
     "Arabic_eng": ("ar", "Arabic", "en", "script"),
     "Hindi_eng": ("hi", "Hindi", "en", "hinglish"),  # 59% of conversations are romanized Hindi
@@ -70,22 +71,23 @@ FREQ_MARGIN = 0.5  # zipf difference needed before frequency alone decides
 # they appear; words in AMBIGUOUS are also ordinary English words, so they take the
 # language of their neighbours.
 HINGLISH_SURE = set("""
-hai hain hoon hun tha thi thay kya kyun kyon nahi nahin nhi aur yeh ye woh wo mera meri mere tera teri tere
-tumhara tumhari aapka aapki aap tum hum humne humko hume tumhe tumko mujhe mujhko mujh bhi toh abhi phir fir
+hai hain hoon hun tha thi thay kya kyun kyon nahi nahin nhi aur yeh ye woh wo mera meri tera teri tere
+tumhara tumhari aapka aapki aap tum hum humne humko hume tumhe tumko mujhe mujhko mujh bhi toh abhi phir
 bahut bohot bahot kuch sab sabhi koi karna karke karo karta karti karte kiya kiye raha rahi rahe rahega rahegi gaya
 gayi gaye jaana jana jaa jao jaata jaati liye wala wali wale matlab achha accha acha theek thik haan haa lekin
-magar agar kyunki kyuki jab tab wahan yahan kal aaj kaise kab kahan kitna kitni kitne kaun kaunsa sirf zyada
-kam thoda thodi thode pata lagta lagti lagte lag dekho dekha dekhte suno suna bolo bola bolte kaha kehna kehte
-chalo chal chalte milne milna mila mili mile ghar kaam paisa paise dost doston log logon baat baatein samajh
+magar agar kyunki kyuki wahan yahan kal aaj kaise kab kahan kitna kitni kitne kaun kaunsa sirf zyada
+kam thoda thodi thode pata lagta lagti lagte dekho dekha dekhte suno suna bolo bola bolte kaha kehna kehte
+chalo chal chalte milne milna mila mili ghar kaam paisa paise dost doston logon baat baatein samajh
 samjha samjhe yaar bhai arre arey bilkul zaroor zarur shayad kabhi hamesha pehle baad saath bina wajah taraf
 tarah waise aise jaise isliye isiliye kyonki apna apni apne unka unki unke uska uski uske inka inki inke
 kuchh sabse bada badi bade chota choti chote naya nayi naye purana purani sahi galat accha bura bure
 hona hoga hogi honge hote hoti hota chahiye chahta chahti chahte lena dena diya di diye liya li
-bata batao bataya batana samay waqt din raat subah shaam abhi jaldi der bahar andar upar neeche aage peeche
+bata batao bataya batana samay waqt raat subah shaam abhi jaldi der bahar andar upar neeche aage peeche
 """.split())
 HINGLISH_AMBIGUOUS = set("""
 main mein me to the is us in un ho hum bas par kar ka ki ke ko se ya de do le lo na ne hi jo so
-""".split())
+pe ab mai hu maine mile log mere tab lag din fir jab
+""".split())  # second line: Hindi words that are also frequent English words (zipf >= 3.3)
 EN_SURE_ZIPF = 3.5   # common English word
 EN_RARE_ZIPF = 2.5   # rare in English: probably romanized Hindi (or a name)
 
@@ -238,38 +240,80 @@ def _segment(chunk: str, l1: str) -> list[str]:
     raise ValueError(l1)
 
 
+# Latin words, numbers and hyphens inside a CJK chunk ("有个meeting", "V3") are cut out
+# before the segmenter runs. pycantonese 5.0.0 maps every unseen ASCII token to the
+# character chr(0xE000 + n) and never stops: after about 7,900 new English words, n runs
+# past the Private Use Area into full-width punctuation (0xE000 + 7948 = "，"), and from
+# then on every "，" came back as the word that took that slot ("Kevon"). Feeding the
+# segmenter only CJK text keeps its mapping fixed.
+_LATIN_RUN = re.compile(r"[0-9A-Za-zÀ-ɏḀ-ỿ'’-]+")
+
+
+def _segment_mixed(chunk: str, l1: str) -> list[str]:
+    pieces, pos = [], 0
+    for m in _LATIN_RUN.finditer(chunk):
+        if m.start() > pos:
+            pieces += _segment(chunk[pos:m.start()], l1)
+        pieces.append(m.group())
+        pos = m.end()
+    if pos < len(chunk):
+        pieces += _segment(chunk[pos:], l1)
+    return pieces
+
+
 def _has_cjk(chunk: str, l1: str) -> bool:
     return any(_in_ranges(ord(ch), SCRIPT_RANGES[l1]) for ch in chunk)
 
 
 # ---------------------------------------------------------------- public entry point
-def tokenize_and_tag(text: str, pair: str) -> list[tuple[str, str]]:
-    """Split one sentence into words and tag each with a language code.
+def tokenize_and_tag_spaced(text: str, pair: str) -> list[tuple[str, str, bool]]:
+    """Split one sentence into words; return (word, lang_code, space_before) triples.
 
-    Tokens without letters (numbers, bare punctuation, emoji) are dropped.
+    `space_before` is True when the word is preceded by whitespace in the original text
+    (the first word of the sentence counts as True). Pieces cut out of one chunk by a
+    CJK segmenter get False, so the original text can be rebuilt exactly and every
+    tokenizer sees the natural spacing.
+
+    Chunks without letters (numbers, bare punctuation, emoji) are dropped. Inside a
+    segmented CJK chunk, pieces without letters ("，", "。", "3") are attached to the
+    previous word instead, the same way "maestría," keeps its comma in Latin-script text.
     The sticky rule for Latin-script pairs restarts at every sentence.
     """
     l1, _, l2, method = PAIRS[pair]
-    out: list[tuple[str, str]] = []
+    out: list[tuple[str, str, bool]] = []
     if method == "hinglish":
         words = text.split()
-        return [(w, t) for w, t in zip(words, tag_hinglish(words)) if t is not None]
+        return [(w, t, True) for w, t in zip(words, tag_hinglish(words)) if t is not None]
     prev: str | None = None
     for chunk in text.split():
-        if method == "cjk" and _has_cjk(chunk, l1):
-            pieces = [p for p in _segment(chunk, l1) if p.strip()]
-        else:
-            pieces = [chunk]
+        segmented = method == "cjk" and _has_cjk(chunk, l1)
+        pieces = [p for p in _segment_mixed(chunk, l1) if p.strip()] if segmented else [chunk]
+        pending = ""  # letterless pieces at the start of a chunk, glued to the next word
+        first_in_chunk = True
         for piece in pieces:
             if method == "freq":
                 lang = tag_by_frequency(piece, l1, l2, prev)
             else:
                 lang = tag_by_script(piece, l1, l2)
             if lang is None:
+                if not segmented:
+                    continue
+                if not first_in_chunk:
+                    w, lg, sp = out[-1]
+                    out[-1] = (w + piece, lg, sp)
+                else:
+                    pending += piece
                 continue
-            out.append((piece, lang))
+            out.append((pending + piece, lang, first_in_chunk))
+            pending = ""
+            first_in_chunk = False
             prev = lang
     return out
+
+
+def tokenize_and_tag(text: str, pair: str) -> list[tuple[str, str]]:
+    """Split one sentence into words and tag each with a language code: (word, lang_code) pairs."""
+    return [(w, lang) for w, lang, _ in tokenize_and_tag_spaced(text, pair)]
 
 
 if __name__ == "__main__":

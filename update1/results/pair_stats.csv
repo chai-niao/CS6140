@@ -1,13 +1,13 @@
 pair,L1,L2,conversations,words,words_per_conv,L2_share_%,switch_rate_%,switches_per_conv,small_%,medium_%,large_%,switch_rate_tag_%,switch_rate_inter_%,switch_rate_intra_%
 Arabic_eng,Arabic,English,8000,359915,45.0,43.8,12.88,5.66,27.4,25.1,47.4,18.0,8.76,13.36
-Can_Eng,Cantonese,English,8000,592755,74.1,30.6,21.4,15.64,49.8,26.7,23.5,22.66,19.22,22.43
-Chinese_eng,Mandarin,English,8000,531272,66.4,39.0,10.61,6.94,23.9,17.9,58.2,14.97,7.73,10.77
+Can_Eng,Cantonese,English,8000,558625,69.8,26.6,12.83,8.83,36.2,23.3,40.5,13.48,11.63,13.44
+Chinese_eng,Mandarin,English,8000,530160,66.3,38.9,10.66,6.96,24.3,17.7,58.0,15.06,7.76,10.82
 French_eng,French,English,8000,418153,52.3,35.2,10.98,5.63,26.3,19.1,54.5,16.42,8.28,9.96
 German_Eng,German,English,6819,330803,48.5,36.2,11.85,5.63,29.3,20.4,50.2,17.87,9.2,10.48
 German_French,German,French,8000,377128,47.1,39.6,10.77,4.97,22.5,22.8,54.7,15.52,8.47,10.07
-Hindi_eng,Hindi,English,8000,446138,55.8,48.0,24.46,13.4,53.1,28.9,18.0,32.29,17.69,26.06
+Hindi_eng,Hindi,English,8000,446138,55.8,47.9,24.06,13.18,52.3,29.2,18.5,31.92,17.46,25.47
 Italian_eng,Italian,English,7979,428255,53.7,36.4,10.85,5.71,25.5,19.5,54.9,15.98,8.25,10.02
-Japanese_eng,Japanese,English,8000,619796,77.5,33.2,8.69,6.64,23.3,11.3,65.4,11.32,6.81,8.77
+Japanese_eng,Japanese,English,8000,617909,77.2,33.0,8.71,6.64,23.6,11.2,65.2,11.36,6.82,8.8
 Korean_eng,Korean,English,8000,355171,44.4,47.0,14.11,6.12,27.6,26.5,45.9,21.01,9.93,13.86
 Malay_eng,Malay,English,8000,420286,52.5,39.1,15.51,7.99,39.1,24.6,36.3,20.18,10.65,17.25
 Philippines_eng,Filipino,English,8000,446109,55.8,46.1,20.34,11.14,48.0,28.3,23.7,25.14,15.09,21.98

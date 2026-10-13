@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from lid import PAIRS, tag_by_frequency, tag_by_script, tokenize_and_tag  # noqa: E402
+from lid import PAIRS, tag_by_frequency, tag_by_script, tokenize_and_tag, tokenize_and_tag_spaced  # noqa: E402
 
 
 def langs(text, pair):
@@ -62,6 +62,44 @@ def test_cjk_segmentation_and_tagging():
     got = tokenize_and_tag("我今天下午有个meeting，你先帮我review一下。", "Chinese_eng")
     tags = [l for _, l in got]
     assert "en" in tags and "zh" in tags
-    assert [w for w, l in got if l == "en"] == ["meeting", "review"]
-    # punctuation pieces from the segmenter are dropped
+    assert [w for w, l in got if l == "en"] == ["meeting，", "review"]
+    # punctuation pieces from the segmenter are attached to the previous word, not dropped
     assert all(any(c.isalpha() for c in w) for w, _ in got)
+    assert got[-1] == ("一下。", "zh")
+
+
+def test_cjk_text_is_rebuilt_exactly():
+    # space_before + words reproduce the sentence (no characters dropped, no spaces invented)
+    for pair, text in [
+        ("Chinese_eng", "我今天下午有个meeting，你先帮我review一下那个文件。"),
+        ("Can_Eng", "「佢話」OK la，唔使擔心喇。"),
+        ("Japanese_eng", "今日はmeetingがあるので、ちょっと忙しいです。"),
+        ("Spanish_eng", "¿Qué tal? I am fine."),
+    ]:
+        got = tokenize_and_tag_spaced(text, pair)
+        rebuilt = "".join((" " if sp and i else "") + w for i, (w, _, sp) in enumerate(got))
+        assert rebuilt == text
+
+
+def test_hinglish_english_homographs():
+    # mile, log, tab, mere are also Hindi words; in an English sentence they must stay English
+    got = langs("I walked a mile to log in at the tab, mere coincidence.", "Hindi_eng")
+    assert got == ["en"] * 12
+    got = dict(tokenize_and_tag("Mere dost ne kaha ki woh kal aayega.", "Hindi_eng"))
+    assert got["Mere"] == "hi" and got["dost"] == "hi"
+
+
+def test_cantonese_segmenter_mapping_does_not_grow():
+    # pycantonese gives every unseen ASCII token a new character chr(0xE000 + n); once n
+    # passed the Private Use Area, "，" decoded as "Kevon". Only CJK text may reach it.
+    from pycantonese.word_segmentation.segmenter import _get_default_segmenter
+
+    tokenize_and_tag("暖身", "Can_Eng")
+    before = len(_get_default_segmenter()._alphanum_to_pua)
+    tokenize_and_tag("我睇咗Zorblaxquon同Quintessa-7777嘅news，真係amazingzz！", "Can_Eng")
+    assert len(_get_default_segmenter()._alphanum_to_pua) == before
+
+
+def test_latin_runs_inside_cjk_chunks_stay_whole():
+    got = tokenize_and_tag("我用iPhone15同V3模型，好正。", "Can_Eng")
+    assert [w for w, l in got if l == "en"] == ["iPhone15", "V3"]
