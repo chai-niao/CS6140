@@ -16,11 +16,38 @@ from common import RESULTS_DIR, available_pairs, load_split
 from lid import PAIRS
 
 
+def score(path) -> None:
+    """Accuracy per method and per pair from a filled-in sample (correct = y / n)."""
+    df = pd.read_csv(path)
+    df["correct"] = df["correct"].astype(str).str.strip().str.lower()
+    done = df[df["correct"].isin(["y", "n"])]
+    if done.empty:
+        print("no rows marked yet: fill the 'correct' column with y or n first")
+        return
+    print(f"marked rows: {len(done)} of {len(df)}\n")
+    for level in ("method", "pair"):
+        g = done.groupby(level)["correct"].agg(n="size", acc=lambda s: (s == "y").mean())
+        g["acc"] = (100 * g["acc"]).round(1)
+        print(f"accuracy by {level} (%):")
+        print(g.to_string())
+        print()
+    overall = 100 * (done["correct"] == "y").mean()
+    print(f"overall accuracy: {overall:.1f}% ({(done['correct'] == 'y').sum()} / {len(done)})\n")
+    wrong = done[done["correct"] == "n"]
+    if not wrong.empty:
+        print("mis-tagged words:")
+        print(wrong[["pair", "word", "predicted", "context"]].to_string(index=False))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--per_pair", type=int, default=20)
     ap.add_argument("--seed", type=int, default=7)
+    ap.add_argument("--score", action="store_true", help="compute accuracy from the filled-in CSV instead of sampling")
     args = ap.parse_args()
+    if args.score:
+        score(RESULTS_DIR / "lid_audit_sample.csv")
+        return
     rng = random.Random(args.seed)
     rows = []
     for pair in available_pairs():

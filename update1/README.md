@@ -51,6 +51,7 @@ python baselines.py             # 3. results/baseline_f1.{csv,md}
 python dataset.py --demo        # 4. results/dataloader_demo.txt (downloads the two tokenizers)
 python causal_check.py          # 5. results/leak_test.txt (downloads xlm-roberta-base and Qwen2.5-0.5B, about 1 GB each)
 python audit.py                 # 6. results/lid_audit_sample.csv; the `correct` column is filled in manually
+python audit.py --score         # 7. accuracy per method and per pair from the filled-in CSV
 ```
 
 Other entry points:
