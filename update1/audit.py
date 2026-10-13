@@ -44,10 +44,17 @@ def main() -> None:
     ap.add_argument("--per_pair", type=int, default=20)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--score", action="store_true", help="compute accuracy from the filled-in CSV instead of sampling")
+    ap.add_argument("--force", action="store_true", help="overwrite a sample that has already been reviewed")
     args = ap.parse_args()
     if args.score:
         score(RESULTS_DIR / "lid_audit_sample.csv")
         return
+    out = RESULTS_DIR / "lid_audit_sample.csv"
+    if out.exists() and not args.force:
+        marked = pd.read_csv(out)["correct"].notna().sum()
+        if marked:
+            print(f"{out} already has {marked} reviewed rows; not overwriting it (use --force to draw a new sample)")
+            return
     rng = random.Random(args.seed)
     rows = []
     for pair in available_pairs():
@@ -61,7 +68,6 @@ def main() -> None:
                          "predicted": c["langs"][i], "correct": ""})
     df = pd.DataFrame(rows)
     RESULTS_DIR.mkdir(exist_ok=True)
-    out = RESULTS_DIR / "lid_audit_sample.csv"
     df.to_csv(out, index=False)
     print(df.groupby("method").size().to_string())
     print(f"\nwrote {out}  ({len(df)} rows). Mark the 'correct' column with y/n to compute accuracy.")

@@ -2,12 +2,9 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-# raw CSVs downloaded from Hugging Face; override with the SWITCHLINGUA_DIR environment variable
-DATA_DIR = Path(os.environ.get("SWITCHLINGUA_DIR", HERE.parent / "data" / "SwitchLingua_text"))
 PROCESSED_DIR = HERE / "data_processed"                  # output of split.py
 RESULTS_DIR = HERE / "results"
 SPLITS = ("train", "dev", "test")

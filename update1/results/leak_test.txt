@@ -3,6 +3,14 @@ Target word t = 4 ('maestría,'); all tokens after it are replaced by random ids
 
 | model | causal | subwords | t (last subword) | max |diff| at positions <= t | max |diff| after t | verdict |
 |---|---|---|---|---|---|---|
-| XLM-R without mask (reference) | no | 14 | 6 | 1.73e+00 | 3.86e+00 | LEAK: prefix depends on future tokens |
-| Model A: XLM-R + causal mask | yes | 14 | 6 | 0.00e+00 | 2.25e+00 | no leak: prefix unchanged |
-| Model B: Qwen2.5-0.5B (causal by construction) | yes | 15 | 7 | 0.00e+00 | 2.23e+02 | no leak: prefix unchanged |
+| XLM-R without mask (reference) | no | 15 | 7 | 1.59e+00 | 8.26e+00 | LEAK: prefix depends on future tokens |
+| Model A: XLM-R + causal mask | yes | 15 | 7 | 0.00e+00 | 3.03e+00 | no leak: prefix unchanged |
+| Model B: Qwen2.5-0.5B (causal by construction) | yes | 16 | 8 | 0.00e+00 | 2.28e+02 | no leak: prefix unchanged |
+
+Leak test on a real DataLoader batch: 8 dev conversations (Spanish_eng, Chinese_eng, Japanese_eng, Hindi_eng), BOS + right padding; in every row the tokens after a random labelled position t are replaced by random ids.
+
+| model | rows | subwords per row | max |diff| at positions <= t | max |diff| row alone vs in padded batch | verdict |
+|---|---|---|---|---|---|
+| XLM-R without mask (reference) | 8 | 25 to 129 | 2.43e+00 | 6.20e-06 | LEAK, padding-invariant |
+| Model A: XLM-R + causal mask | 8 | 25 to 129 | 0.00e+00 | 3.34e-06 | no leak, padding-invariant |
+| Model B: Qwen2.5-0.5B (causal by construction) | 8 | 24 to 128 | 0.00e+00 | 0.00e+00 | no leak, padding-invariant |
