@@ -1,0 +1,129 @@
+{
+  "comment": "Loss weighting experiment with Model A on a 2,000-conversation subset of every pair, 1 epoch: lambda_switch = 1 and lambda_duration in {0, 0.5, 1, 2}; one run without class weights; one duration-only run (lambda_switch = 0, checkpoint chosen by duration accuracy).",
+  "streaming_check": 0,
+  "keep_checkpoints": false,
+  "runs": [
+    {
+      "name": "sweep_lam0",
+      "args": [
+        "--model",
+        "xlmr",
+        "--max_train_convs",
+        "2000",
+        "--epochs",
+        "1",
+        "--batch_size",
+        "32",
+        "--eval_every",
+        "150",
+        "--time_budget_min",
+        "12",
+        "--lambda_duration",
+        "0"
+      ]
+    },
+    {
+      "name": "sweep_lam05",
+      "args": [
+        "--model",
+        "xlmr",
+        "--max_train_convs",
+        "2000",
+        "--epochs",
+        "1",
+        "--batch_size",
+        "32",
+        "--eval_every",
+        "150",
+        "--time_budget_min",
+        "12",
+        "--lambda_duration",
+        "0.5"
+      ]
+    },
+    {
+      "name": "sweep_lam1",
+      "args": [
+        "--model",
+        "xlmr",
+        "--max_train_convs",
+        "2000",
+        "--epochs",
+        "1",
+        "--batch_size",
+        "32",
+        "--eval_every",
+        "150",
+        "--time_budget_min",
+        "12",
+        "--lambda_duration",
+        "1"
+      ]
+    },
+    {
+      "name": "sweep_lam2",
+      "args": [
+        "--model",
+        "xlmr",
+        "--max_train_convs",
+        "2000",
+        "--epochs",
+        "1",
+        "--batch_size",
+        "32",
+        "--eval_every",
+        "150",
+        "--time_budget_min",
+        "12",
+        "--lambda_duration",
+        "2"
+      ]
+    },
+    {
+      "name": "sweep_lam1_noweight",
+      "args": [
+        "--model",
+        "xlmr",
+        "--max_train_convs",
+        "2000",
+        "--epochs",
+        "1",
+        "--batch_size",
+        "32",
+        "--eval_every",
+        "150",
+        "--time_budget_min",
+        "12",
+        "--lambda_duration",
+        "1",
+        "--switch_weight",
+        "none",
+        "--duration_weight",
+        "none"
+      ]
+    },
+    {
+      "name": "sweep_dur_only",
+      "args": [
+        "--model",
+        "xlmr",
+        "--max_train_convs",
+        "2000",
+        "--epochs",
+        "1",
+        "--batch_size",
+        "32",
+        "--eval_every",
+        "150",
+        "--time_budget_min",
+        "12",
+        "--lambda_switch",
+        "0",
+        "--lambda_duration",
+        "1",
+        "--select_by",
+        "dur_acc"
+      ]
+    }
+  ]
+}

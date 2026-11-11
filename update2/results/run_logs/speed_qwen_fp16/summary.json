@@ -1,0 +1,61 @@
+{
+  "run_name": "speed_qwen_fp16",
+  "model": "qwen",
+  "backbone": "Qwen/Qwen2.5-0.5B",
+  "out_dir": "/kaggle/working/runs/speed_qwen_fp16",
+  "steps": 40,
+  "epochs": 1,
+  "train_minutes": 1.0,
+  "best_step": 40,
+  "nonfinite_batches": 0,
+  "lambda_switch": 1.0,
+  "lambda_duration": 1.0,
+  "switch_weight": "balanced",
+  "duration_weight": "balanced",
+  "train_top_layers": 0,
+  "max_train_convs": 1000,
+  "dev": {
+    "pairs": 2,
+    "mean_F1": 0.6967,
+    "sigma_F1": 0.0331,
+    "min_F1": 0.6636,
+    "min_pair": "Hindi_eng",
+    "max_F1": 0.7298,
+    "max_pair": "Spanish_eng",
+    "mean_F1_at_0.5": 0.6694,
+    "mean_dur_acc": 0.6169,
+    "mean_F1_macro_by_type": 0.7031,
+    "mean_F1_inter": 0.7261,
+    "mean_F1_intra": 0.6061,
+    "mean_F1_tag": 0.7771
+  },
+  "dev_losses": {
+    "total": 1.207289355141776,
+    "switch": 0.3731313015733446,
+    "duration": 0.8341580544199262
+  },
+  "test": {
+    "pairs": 2,
+    "mean_F1": 0.7373,
+    "sigma_F1": 0.0651,
+    "min_F1": 0.6722,
+    "min_pair": "Hindi_eng",
+    "max_F1": 0.8025,
+    "max_pair": "Spanish_eng",
+    "mean_F1_at_0.5": 0.6986,
+    "mean_dur_acc": 0.6384,
+    "mean_F1_macro_by_type": 0.7259,
+    "mean_F1_inter": 0.7661,
+    "mean_F1_intra": 0.5811,
+    "mean_F1_tag": 0.8306
+  },
+  "test_losses": {
+    "total": 1.1436784267425537,
+    "switch": 0.36357062061627704,
+    "duration": 0.7801078160603842
+  },
+  "thresholds": {
+    "Hindi_eng": 0.7,
+    "Spanish_eng": 0.7
+  }
+}

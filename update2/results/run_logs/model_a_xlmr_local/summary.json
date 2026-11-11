@@ -1,0 +1,82 @@
+{
+  "run_name": "Model A (XLM-R), local",
+  "model": "xlmr",
+  "backbone": "xlm-roberta-base",
+  "out_dir": "runs\\local_xlmr",
+  "steps": 5948,
+  "epochs": 2,
+  "train_minutes": 10.2,
+  "best_step": 5948,
+  "nonfinite_steps": 0,
+  "fp16_overflow_skipped_steps": 0,
+  "final_loss_scale": null,
+  "stopped_by_time_budget": false,
+  "peak_gpu_memory_gb": [
+    6.48
+  ],
+  "max_len": 256,
+  "stride": 128,
+  "lambda_switch": 1.0,
+  "lambda_duration": 1.0,
+  "switch_weight": "balanced",
+  "duration_weight": "balanced",
+  "train_top_layers": 0,
+  "max_train_convs": 0,
+  "dev": {
+    "pairs": 15,
+    "mean_F1": 0.7842,
+    "sigma_F1": 0.0711,
+    "min_F1": 0.6351,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.8934,
+    "max_pair": "Korean_eng",
+    "mean_F1_at_0.5": 0.7133,
+    "mean_dur_acc": 0.6972,
+    "mean_F1_macro_by_type": 0.7849,
+    "mean_F1_inter": 0.8344,
+    "mean_F1_intra": 0.683,
+    "mean_F1_tag": 0.8372
+  },
+  "dev_losses": {
+    "total": 0.9600088493798369,
+    "switch": 0.24761537734859734,
+    "duration": 0.71239346906703
+  },
+  "test": {
+    "pairs": 15,
+    "mean_F1": 0.7839,
+    "sigma_F1": 0.0697,
+    "min_F1": 0.6362,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.8874,
+    "max_pair": "Korean_eng",
+    "mean_F1_at_0.5": 0.7134,
+    "mean_dur_acc": 0.6938,
+    "mean_F1_macro_by_type": 0.7856,
+    "mean_F1_inter": 0.8342,
+    "mean_F1_intra": 0.6802,
+    "mean_F1_tag": 0.8426
+  },
+  "test_losses": {
+    "total": 0.9626161145266666,
+    "switch": 0.24707943545554273,
+    "duration": 0.7155366778694173
+  },
+  "thresholds": {
+    "Arabic_eng": 0.85,
+    "Can_Eng": 0.8,
+    "Chinese_eng": 0.85,
+    "French_eng": 0.85,
+    "German_Eng": 0.85,
+    "German_French": 0.85,
+    "Hindi_eng": 0.8,
+    "Italian_eng": 0.85,
+    "Japanese_eng": 0.85,
+    "Korean_eng": 0.85,
+    "Malay_eng": 0.8,
+    "Philippines_eng": 0.8,
+    "Russian_eng": 0.85,
+    "Spanish_eng": 0.8,
+    "Vietnamese_eng": 0.8
+  }
+}

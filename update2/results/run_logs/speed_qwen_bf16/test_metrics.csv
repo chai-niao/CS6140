@@ -1,0 +1,3 @@
+pair,positions,switch_rate_%,threshold,P,R,F1,F1_at_0.5,dur_acc,F1_macro_by_type,F1_inter,F1_intra,F1_tag
+Hindi_eng,2672,24.7,0.65,0.5986,0.8,0.6848,0.6395,0.6076,0.6808,0.6667,0.6194,0.7563
+Spanish_eng,2622,12.4,0.7,0.8307,0.8,0.815,0.7631,0.6738,0.7965,0.8667,0.6057,0.917

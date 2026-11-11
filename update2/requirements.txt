@@ -1,0 +1,7 @@
+# Update 2 adds these to the requirements of update1/ (torch, transformers, sentencepiece, protobuf, pandas, ...)
+torch>=2.1
+transformers>=4.40
+numpy
+pandas
+matplotlib
+pytest

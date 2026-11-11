@@ -81,3 +81,27 @@ def test_streaming_prefix_equals_training_window(tok, pair, text):
         assert window["y_sw"][len(prefix) - 1] == y_sw
     if bos_id(tok) is not None:
         assert window["input_ids"][0] == bos_id(tok)
+
+
+@pytest.mark.parametrize("pair,text", SENTENCES)
+def test_capped_streaming_prefix_equals_the_scoring_window(tok, pair, text):
+    # a tiny window forces several windows per sentence: with max_len / stride the streaming prefix of every
+    # word is exactly the tail of the window that scores it, and never longer than that window
+    conv = make_conv(pair, text)
+    max_len, stride = 8, 4
+    windows = PrefixWindowDataset([conv], tok, max_len=max_len, stride=stride)
+    assert len(windows) > 1
+    off = 1 if bos_id(tok) is not None else 0
+    scored = {}  # subword index in the conversation -> (window input ids, index of that subword in the window)
+    for k, item in enumerate(windows):
+        for j, y in enumerate(item["y_sw"]):
+            if y != IGNORE:
+                scored[k * stride + j - off] = (item["input_ids"], j)
+    e = encode_conversation(conv, tok)
+    for w, prefix, y_sw, _ in iter_prefixes(conv, tok, max_len=max_len, stride=stride):
+        last = e["last_sub_of_word"][w]
+        if y_sw == IGNORE:
+            continue
+        ids, j = scored[last]
+        assert prefix == ids[: j + 1]
+        assert len(prefix) <= max_len + off

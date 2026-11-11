@@ -1,0 +1,61 @@
+{
+  "run_name": "speed_xlmr_bf16",
+  "model": "xlmr",
+  "backbone": "xlm-roberta-base",
+  "out_dir": "/kaggle/working/runs/speed_xlmr_bf16",
+  "steps": 40,
+  "epochs": 1,
+  "train_minutes": 0.6,
+  "best_step": 40,
+  "nonfinite_batches": 0,
+  "lambda_switch": 1.0,
+  "lambda_duration": 1.0,
+  "switch_weight": "balanced",
+  "duration_weight": "balanced",
+  "train_top_layers": 0,
+  "max_train_convs": 1000,
+  "dev": {
+    "pairs": 2,
+    "mean_F1": 0.5585,
+    "sigma_F1": 0.1141,
+    "min_F1": 0.4444,
+    "min_pair": "Hindi_eng",
+    "max_F1": 0.6726,
+    "max_pair": "Spanish_eng",
+    "mean_F1_at_0.5": 0.5275,
+    "mean_dur_acc": 0.4911,
+    "mean_F1_macro_by_type": 0.5617,
+    "mean_F1_inter": 0.5533,
+    "mean_F1_intra": 0.4705,
+    "mean_F1_tag": 0.6614
+  },
+  "dev_losses": {
+    "total": 1.4523921694074358,
+    "switch": 0.5142849683761597,
+    "duration": 0.9381071925163269
+  },
+  "test": {
+    "pairs": 2,
+    "mean_F1": 0.6009,
+    "sigma_F1": 0.1398,
+    "min_F1": 0.4612,
+    "min_pair": "Hindi_eng",
+    "max_F1": 0.7407,
+    "max_pair": "Spanish_eng",
+    "mean_F1_at_0.5": 0.5633,
+    "mean_dur_acc": 0.5127,
+    "mean_F1_macro_by_type": 0.5834,
+    "mean_F1_inter": 0.5923,
+    "mean_F1_intra": 0.443,
+    "mean_F1_tag": 0.7147
+  },
+  "test_losses": {
+    "total": 1.4059520959854126,
+    "switch": 0.5039713829755783,
+    "duration": 0.9019807279109955
+  },
+  "thresholds": {
+    "Hindi_eng": 0.55,
+    "Spanish_eng": 0.8
+  }
+}
