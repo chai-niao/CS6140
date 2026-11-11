@@ -195,14 +195,30 @@ def make_loader(convs: list[dict], tok, batch_size: int = 16, max_len: int = 128
     return DataLoader(ds, batch_size=batch_size, shuffle=shuffle, collate_fn=make_collate(pad_id))
 
 
-def iter_prefixes(conv: dict, tok):
+def window_start(i: int, max_len: int, stride: int) -> int:
+    """First subword of the PrefixWindowDataset window that scores subword i.
+
+    Window 0 covers [0, max_len) and scores all of it; window k >= 1 starts at k * stride and scores
+    only its last `stride` positions (the earlier ones were scored by window k - 1)."""
+    if i < max_len:
+        return 0
+    return ((i - max_len) // stride + 1) * stride
+
+
+def iter_prefixes(conv: dict, tok, max_len: int | None = None, stride: int | None = None):
     """Streaming view: after each word t yield (t, prefix_ids, y_sw[t], y_dur[t]).
 
-    The prefix starts with the same BOS token as the training windows."""
+    The prefix starts with the same BOS token as the training windows. Without max_len it is the whole
+    conversation so far. With max_len (and stride, default max_len // 2) the context is limited to the
+    training window that scores word t, so a long conversation never exceeds the window length the model
+    was trained on (XLM-R has only 512 positions) and the streaming prediction equals the windowed one."""
     e = encode_conversation(conv, tok)
     bos = [bos_id(tok)] if bos_id(tok) is not None else []
+    if max_len is not None and stride is None:
+        stride = max_len // 2
     for w, last in sorted(e["last_sub_of_word"].items()):
-        yield w, bos + e["input_ids"][: last + 1], conv["y_sw"][w], conv["y_dur"][w]
+        start = window_start(last, max_len, stride) if max_len is not None else 0
+        yield w, bos + e["input_ids"][start: last + 1], conv["y_sw"][w], conv["y_dur"][w]
 
 
 # ------------------------------------------------------------------ demo

@@ -35,7 +35,7 @@ from common import markdown_table
 from data import (DEFAULT_DATA_DIR, available_pairs, duplicate_ids, duration_class_weight, duration_counts, load_convs,
                   switch_class_weight, switch_statistics)
 from batching import make_train_loader
-from dataset import get_tokenizer
+from dataset import get_tokenizer, make_loader
 from engine import AutocastForward, amp_dtype_for, autocast, evaluate_convs, get_device, to_device
 from losses import MultiTaskLoss
 from model import DualHeadModel, save_model
@@ -66,9 +66,11 @@ def parse_args(argv=None) -> argparse.Namespace:
                          "metric), mean F1 at threshold 0.5, or duration accuracy (for duration-only runs)")
     ap.add_argument("--lambda_duration", type=float, default=1.0)
     ap.add_argument("--switch_weight", default="balanced", help="class weight of the switch label: none | balanced | <number>")
-    ap.add_argument("--duration_weight", default="balanced", help="class weights of the duration bins: none | balanced")
+    ap.add_argument("--duration_weight", default="balanced", choices=["none", "balanced"], help="class weights of the duration bins")
     ap.add_argument("--train_top_layers", type=int, default=0,
                     help="0 = fine-tune the whole backbone; k = freeze all but its top k layers (heads always train)")
+    ap.add_argument("--gradient_checkpointing", type=int, default=0,
+                    help="1 = recompute backbone activations in the backward pass (less memory, larger micro-batches)")
     ap.add_argument("--max_len", type=int, default=256, help="window length in subwords (256 since Update 2)")
     ap.add_argument("--stride", type=int, default=128)
     ap.add_argument("--bucket_batches", type=int, default=50,
@@ -175,6 +177,8 @@ def main(argv=None) -> dict:
     model = DualHeadModel(args.model, dropout=args.dropout, tiny_vocab=len(tok) if args.tiny else None)
     if args.train_top_layers > 0:
         model.train_top_layers_only(args.train_top_layers)
+    if args.gradient_checkpointing:
+        model.enable_gradient_checkpointing()
     model.to(device)
     log(model.describe())
     log(loss_fn.describe())
@@ -204,12 +208,14 @@ def main(argv=None) -> dict:
         "switch_class_weight": sw_weight, "duration_class_weight": dur_weight}, indent=2), encoding="utf-8")
 
     # ------------------------------------------------------------------ dev evaluation during training
+    # The best checkpoint lives in model.pt; it is kept in memory only when nothing is saved to disk.
     best = {"score": -1.0, "step": 0, "state": None}
     t_start = time.perf_counter()
+    dev_sub_loader = make_loader(dev_sub, tok, batch_size=args.eval_batch_size, max_len=args.max_len, stride=args.stride,
+                                 shuffle=False)  # built once, reused by every periodic evaluation
 
     def dev_eval(step: int, epoch: float) -> None:
-        res = evaluate_convs(runner, dev_sub, tok, device, amp_dtype, loss_fn, batch_size=args.eval_batch_size,
-                             max_len=args.max_len, stride=args.stride)
+        res = evaluate_convs(runner, dev_sub, tok, device, amp_dtype, loss_fn, loader=dev_sub_loader)
         f1 = np.array([r["F1_at_0.5"] for r in res["rows"]])
         row = {"step": step, "epoch": round(epoch, 3), **{f"dev_loss_{k}": round(v, 4) for k, v in res["losses"].items()},
                "dev_mean_F1_at_0.5": round(float(f1.mean()), 4), "dev_sigma_F1_at_0.5": round(float(f1.std(ddof=0)), 4),
@@ -218,64 +224,105 @@ def main(argv=None) -> dict:
         append_row(out_dir / "dev_log.csv", row)
         log(f"  dev @ step {step}: loss {row.get('dev_loss_total', float('nan')):.4f} "
             f"(switch {row.get('dev_loss_switch', float('nan')):.4f}, duration {row.get('dev_loss_duration', float('nan')):.4f}), "
-            f"mean F1@0.5 {row['dev_mean_F1_at_0.5']:.4f}, sigma {row['dev_sigma_F1_at_0.5']:.4f}, dur acc {row['dev_mean_dur_acc']:.4f}")
+            f"mean F1@0.5 {row['dev_mean_F1_at_0.5']:.4f}, tuned {row['dev_mean_F1_tuned']:.4f}, "
+            f"sigma {row['dev_sigma_F1_at_0.5']:.4f}, dur acc {row['dev_mean_dur_acc']:.4f}")
         score = {"f1_tuned": row["dev_mean_F1_tuned"], "switch_f1": row["dev_mean_F1_at_0.5"],
                  "dur_acc": row["dev_mean_dur_acc"]}[args.select_by]
         if score > best["score"]:
-            best.update(score=score, step=step,
-                        state={k: v.detach().to("cpu", copy=True) for k, v in model.state_dict().items()})
+            best.update(score=score, step=step)
             if args.save_model:
                 save_model(model, out_dir / "model.pt", {"step": step, "select_by": args.select_by, "dev_score": score})
+            else:
+                best["state"] = {k: v.detach().to("cpu", copy=True) for k, v in model.state_dict().items()}
         runner.train()
 
+    def accumulation_groups(loader):
+        """The micro-batches of one optimizer step at a time (the last group of an epoch may be shorter)."""
+        group = []
+        for batch in loader:
+            group.append(batch)
+            if len(group) == args.grad_accum:
+                yield group
+                group = []
+        if group:
+            yield group
+
     # ------------------------------------------------------------------ training loop
+    # One optimizer step = grad_accum micro-batches. The loss of every micro-batch is divided by the
+    # (class-weighted) number of targets of the whole step, so the step minimises the mean over all of its
+    # positions, as one large batch would, whatever the length of the individual micro-batches.
     step = 0
     done = False
-    running = {"total": 0.0, "switch": 0.0, "duration": 0.0, "n": 0}
-    nonfinite = 0
+    zero = torch.zeros((), device=device)
+    running = {"total": zero.clone(), "switch": zero.clone(), "duration": zero.clone(), "n": 0}  # stays on the device
+    nonfinite = 0          # steps dropped because the loss was not finite
+    overflow_skipped = 0   # fp16 steps that GradScaler skipped because a gradient overflowed
     stopped_by_budget = False
     t_log = time.perf_counter()
+    batches_per_epoch = len(train_loader)
+    seen = 0
     for epoch in range(args.epochs):
         runner.train()
         optimizer.zero_grad(set_to_none=True)
-        for i, batch in enumerate(train_loader):
-            b = to_device(batch, device)
-            with autocast(device, amp_dtype):
-                sw_logits, dur_logits = runner(b["input_ids"], b["attention_mask"])
-            losses = loss_fn(sw_logits, dur_logits, b["y_sw"], b["y_dur"])
-            loss = losses["total"] / args.grad_accum
-            if torch.isfinite(loss.detach()):
-                (scaler.scale(loss) if scaler else loss).backward()
-                for k in ("total", "switch", "duration"):
-                    running[k] += float(losses[k].detach())
-                running["n"] += 1
-            else:  # fp16 overflow in the forward pass: drop this batch instead of corrupting the weights
+        seen = 0
+        for group in accumulation_groups(train_loader):
+            seen += len(group)
+            group = [to_device(batch, device) for batch in group]
+            norm_sw, norm_dur = zero.clone(), zero.clone()
+            for b in group:
+                n_sw, n_dur = loss_fn.normalizers(b["y_sw"], b["y_dur"])
+                norm_sw += n_sw
+                norm_dur += n_dur
+            step_loss = {"total": zero.clone(), "switch": zero.clone(), "duration": zero.clone()}
+            for b in group:
+                with autocast(device, amp_dtype):
+                    sw_logits, dur_logits = runner(b["input_ids"], b["attention_mask"])
+                losses = loss_fn(sw_logits, dur_logits, b["y_sw"], b["y_dur"], norm_sw, norm_dur)
+                (scaler.scale(losses["total"]) if scaler else losses["total"]).backward()
+                for k in step_loss:
+                    step_loss[k] += losses[k].detach()
+            # one host sync per optimizer step (not per micro-batch)
+            if not torch.isfinite(step_loss["total"]):
                 nonfinite += 1
+                optimizer.zero_grad(set_to_none=True)
                 if nonfinite <= 5 or nonfinite % 100 == 0:
-                    log(f"non-finite loss at step {step} (batch {i}); skipped, {nonfinite} so far")
-            if (i + 1) % args.grad_accum and i + 1 < len(train_loader):
+                    log(f"non-finite loss at step {step}; step dropped, {nonfinite} so far")
                 continue
             if scaler:
                 scaler.unscale_(optimizer)
             nn.utils.clip_grad_norm_(trainable, args.grad_clip)
+            stepped = True
             if scaler:
+                scale_before = scaler.get_scale()
                 scaler.step(optimizer)
                 scaler.update()
+                if scaler.get_scale() < scale_before:  # an inf/NaN gradient: the scaler skipped optimizer.step()
+                    stepped = False
+                    overflow_skipped += 1
+                    if overflow_skipped <= 5 or overflow_skipped % 100 == 0:
+                        log(f"fp16 gradient overflow at step {step}; GradScaler skipped the update "
+                            f"(loss scale now {scaler.get_scale():g}), {overflow_skipped} so far")
             else:
                 optimizer.step()
-            scheduler.step()
             optimizer.zero_grad(set_to_none=True)
+            if not stepped:
+                continue  # neither the schedule nor the step count advance without an update
+            scheduler.step()
             step += 1
-            epoch_float = epoch + (i + 1) / len(train_loader)
+            for k in step_loss:
+                running[k] += step_loss[k]
+            running["n"] += 1
+            epoch_float = epoch + seen / batches_per_epoch
             if step % args.log_every == 0:
                 now = time.perf_counter()
+                n = max(running["n"], 1)
                 row = {"step": step, "epoch": round(epoch_float, 3), "lr": scheduler.get_last_lr()[0],
-                       **{f"loss_{k}": round(running[k] / max(running["n"], 1), 4) for k in ("total", "switch", "duration")},
+                       **{f"loss_{k}": round(float(running[k]) / n, 4) for k in ("total", "switch", "duration")},
                        "sec_per_step": round((now - t_log) / args.log_every, 3)}
                 append_row(out_dir / "train_log.csv", row)
                 log(f"step {step:>6}/{total_steps}  epoch {epoch_float:.2f}  loss {row['loss_total']:.4f}  "
                     f"switch {row['loss_switch']:.4f}  duration {row['loss_duration']:.4f}  lr {row['lr']:.2e}  {row['sec_per_step']:.2f}s/step")
-                running = {"total": 0.0, "switch": 0.0, "duration": 0.0, "n": 0}
+                running = {"total": zero.clone(), "switch": zero.clone(), "duration": zero.clone(), "n": 0}
                 t_log = now
             if args.eval_every and step % args.eval_every == 0:
                 dev_eval(step, epoch_float)
@@ -288,21 +335,24 @@ def main(argv=None) -> dict:
                 stopped_by_budget = done = True
                 break
         if not (args.eval_every and step % args.eval_every == 0):
-            dev_eval(step, float(epoch + 1) if not done else epoch_float)
+            dev_eval(step, float(epoch + 1) if not done else epoch + seen / batches_per_epoch)
             t_log = time.perf_counter()
         if done:
             break
     train_minutes = (time.perf_counter() - t_start) / 60
     peak_gb = [round(torch.cuda.max_memory_allocated(i) / 2**30, 2) for i in range(n_gpus)] if device.type == "cuda" else []
     log(f"training finished: {step} steps in {train_minutes:.1f} min ({60 * train_minutes / max(step, 1):.2f} s/step), "
-        f"{nonfinite} batches skipped for a non-finite loss, peak GPU memory {peak_gb} GB")
+        f"{nonfinite} steps dropped for a non-finite loss, {overflow_skipped} fp16 steps skipped by GradScaler"
+        f"{f' (final loss scale {scaler.get_scale():g})' if scaler else ''}, peak GPU memory {peak_gb} GB")
 
     # ------------------------------------------------------------------ final evaluation with the best checkpoint
-    if best["state"] is not None and best["step"] != step:
-        model.load_state_dict(best["state"])
+    if best["step"] != step:
+        if args.save_model:
+            ckpt = torch.load(out_dir / "model.pt", map_location="cpu", weights_only=False)
+            model.load_state_dict({k: (v.float() if v.is_floating_point() else v) for k, v in ckpt["state_dict"].items()})
+        else:
+            model.load_state_dict(best["state"])
         log(f"restored the best checkpoint (step {best['step']}, dev {args.select_by} {best['score']:.4f})")
-    elif args.save_model and not (out_dir / "model.pt").exists():
-        save_model(model, out_dir / "model.pt", {"step": step})
     dev = evaluate_convs(runner, dev_full, tok, device, amp_dtype, loss_fn, batch_size=args.eval_batch_size,
                          max_len=args.max_len, stride=args.stride)
     test = evaluate_convs(runner, test_convs, tok, device, amp_dtype, loss_fn, thresholds=dev["thresholds"],
@@ -327,7 +377,8 @@ def main(argv=None) -> dict:
     summary = {
         "run_name": args.run_name or args.model, "model": args.model, "backbone": model.backbone_name, "out_dir": str(out_dir),
         "steps": step, "epochs": args.epochs, "train_minutes": round(train_minutes, 1), "best_step": best["step"],
-        "nonfinite_batches": nonfinite, "stopped_by_time_budget": stopped_by_budget, "peak_gpu_memory_gb": peak_gb, "max_len": args.max_len, "stride": args.stride,
+        "nonfinite_steps": nonfinite, "fp16_overflow_skipped_steps": overflow_skipped,
+        "final_loss_scale": scaler.get_scale() if scaler else None, "stopped_by_time_budget": stopped_by_budget, "peak_gpu_memory_gb": peak_gb, "max_len": args.max_len, "stride": args.stride,
         "lambda_switch": args.lambda_switch, "lambda_duration": args.lambda_duration,
         "switch_weight": args.switch_weight, "duration_weight": args.duration_weight, "train_top_layers": args.train_top_layers,
         "max_train_convs": args.max_train_convs, "dev": dev["summary"], "dev_losses": dev["losses"],

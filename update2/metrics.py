@@ -15,31 +15,10 @@ from __future__ import annotations
 
 import numpy as np
 
-THRESHOLDS = [round(0.05 * i, 2) for i in range(1, 20)]  # 0.05 ... 0.95
+import setup_path  # noqa: F401
 
-
-def prf(y_true: np.ndarray, y_pred: np.ndarray) -> tuple[float, float, float]:
-    tp = int(((y_true == 1) & (y_pred == 1)).sum())
-    fp = int(((y_true == 0) & (y_pred == 1)).sum())
-    fn = int(((y_true == 1) & (y_pred == 0)).sum())
-    precision = tp / (tp + fp) if tp + fp else 0.0
-    recall = tp / (tp + fn) if tp + fn else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
-    return precision, recall, f1
-
-
-def f1_at(p: np.ndarray, y: np.ndarray, threshold: float) -> float:
-    return prf(y, (p >= threshold).astype(np.int8))[2]
-
-
-def best_threshold(p: np.ndarray, y: np.ndarray) -> tuple[float, float]:
-    """(threshold, F1) maximising F1 on this data; 0.5 if nothing is better."""
-    best_t, best_f1 = 0.5, -1.0
-    for t in THRESHOLDS:
-        f1 = f1_at(p, y, t)
-        if f1 > best_f1:
-            best_t, best_f1 = t, f1
-    return best_t, best_f1
+# F1 and the threshold grid are shared with the naive baselines of Update 1
+from common import THRESHOLDS, best_threshold, f1_at, prf  # noqa: E402,F401
 
 
 def tune_thresholds(records: dict, pairs: list[str] | None = None) -> dict[str, float]:

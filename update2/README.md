@@ -39,8 +39,9 @@ directory given with `--data_dir`.
 ```bash
 python train.py --model xlmr --epochs 2 --batch_size 32                        # Model A, all 15 pairs, both GPUs
 python train.py --model qwen --epochs 2 --batch_size 4 --grad_accum 8 --data_parallel 0   # Model B, one GPU
+python train.py --model qwen --epochs 2 --batch_size 8 --grad_accum 4 --gradient_checkpointing 1   # Model B on a 12 GB GPU
 python train.py --model xlmr --max_train_convs 2000 --epochs 2 --lambda_duration 0.5   # a loss-weighting experiment
-python evaluate.py --run_dir runs/<run> --streaming_check 5                    # test metrics + streaming consistency
+python evaluate.py --run_dir runs/<run> --streaming_check 2                    # test metrics + streaming consistency (2 random + the longest conversation per pair)
 python plots.py --runs "Model A (XLM-R)=runs/xlmr_full" "Model B (Qwen2.5-0.5B)=runs/qwen_full" \
                 --sweep "0=runs/sweep_lam0" "0.5=runs/sweep_lam05" "1=runs/sweep_lam1" "2=runs/sweep_lam2"
 ```

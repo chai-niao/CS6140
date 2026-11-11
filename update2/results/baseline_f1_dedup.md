@@ -1,0 +1,24 @@
+# Naive baselines, Anticipatory F1 on the test split
+
+| pair | switch_rate_% | F1_never | F1_always | F1_lang_prior | P_token | R_token | F1_token | F1_token_nopunct | threshold_token | dur_acc_majority | dur_acc_token |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Arabic_eng | 12.94 | 0.0 | 0.229 | 0.229 | 0.837 | 0.546 | 0.661 | 0.454 | 0.4 | 0.468 | 0.565 |
+| Can_Eng | 12.64 | 0.0 | 0.225 | 0.31 | 0.55 | 0.435 | 0.486 | 0.427 | 0.25 | 0.409 | 0.606 |
+| Chinese_eng | 10.62 | 0.0 | 0.192 | 0.192 | 0.753 | 0.584 | 0.658 | 0.439 | 0.3 | 0.584 | 0.668 |
+| French_eng | 11.04 | 0.0 | 0.199 | 0.207 | 0.809 | 0.619 | 0.701 | 0.458 | 0.3 | 0.532 | 0.638 |
+| German_Eng | 11.68 | 0.0 | 0.209 | 0.209 | 0.728 | 0.606 | 0.662 | 0.461 | 0.3 | 0.506 | 0.624 |
+| German_French | 10.89 | 0.0 | 0.196 | 0.196 | 0.728 | 0.59 | 0.652 | 0.451 | 0.3 | 0.534 | 0.581 |
+| Hindi_eng | 23.72 | 0.0 | 0.383 | 0.383 | 0.564 | 0.691 | 0.621 | 0.587 | 0.3 | 0.521 | 0.592 |
+| Italian_eng | 10.77 | 0.0 | 0.195 | 0.198 | 0.762 | 0.569 | 0.651 | 0.416 | 0.3 | 0.551 | 0.635 |
+| Japanese_eng | 8.56 | 0.0 | 0.158 | 0.182 | 0.836 | 0.711 | 0.768 | 0.517 | 0.35 | 0.66 | 0.824 |
+| Korean_eng | 14.02 | 0.0 | 0.246 | 0.246 | 0.878 | 0.65 | 0.747 | 0.637 | 0.35 | 0.454 | 0.569 |
+| Malay_eng | 15.59 | 0.0 | 0.27 | 0.27 | 0.66 | 0.536 | 0.591 | 0.444 | 0.3 | 0.395 | 0.552 |
+| Philippines_eng | 20.33 | 0.0 | 0.338 | 0.338 | 0.403 | 0.858 | 0.548 | 0.506 | 0.2 | 0.472 | 0.538 |
+| Russian_eng | 12.76 | 0.0 | 0.226 | 0.226 | 0.743 | 0.509 | 0.604 | 0.449 | 0.3 | 0.462 | 0.558 |
+| Spanish_eng | 12.05 | 0.0 | 0.215 | 0.237 | 0.717 | 0.608 | 0.658 | 0.453 | 0.25 | 0.481 | 0.619 |
+| Vietnamese_eng | 11.18 | 0.0 | 0.201 | 0.252 | 0.732 | 0.591 | 0.654 | 0.432 | 0.3 | 0.485 | 0.684 |
+
+Token-lookup baseline over 15 pairs: mean F1 = 0.644, sigma = 0.068 (min 0.486 Can_Eng, max 0.768 Japanese_eng).
+Same lookup with punctuation stripped from the token: mean F1 = 0.475, sigma = 0.060.
+'always' reference: mean F1 = 0.232. Duration accuracy, majority bin: mean 0.501; token bin: mean 0.617.
+Excluded as duplicates of an earlier split: 7 dev and 8 test conversations (../update2/duplicates.json).

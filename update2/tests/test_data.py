@@ -26,3 +26,14 @@ def test_duplicates_are_found_and_dropped(tmp_path, monkeypatch):
     assert [c["conv_id"] for c in data.load_convs(tmp_path, "test", [pair])] == ["Spanish_eng_7"]
     assert len(data.load_convs(tmp_path, "test", [pair], drop_duplicates=False)) == 3
     assert len(data.load_convs(tmp_path, "train", [pair])) == 2
+
+
+def test_duration_weight_rejects_unknown_modes():
+    import pytest
+
+    convs = [{"y_dur": [0, 1, 2, -1]}]
+    assert data.duration_class_weight(convs, "none") is None
+    assert len(data.duration_class_weight(convs, "balanced")) == 3
+    for bad in ("2", "balance", "uniform"):
+        with pytest.raises(ValueError):
+            data.duration_class_weight(convs, bad)
