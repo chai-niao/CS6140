@@ -1,6 +1,6 @@
 {
   "comment": "Model B on all training conversations of the 15 pairs: 2 epochs (about 130 min at 1.3 s per step), effective batch 32 (4 x 8 accumulation) on ONE T4. With nn.DataParallel every micro-batch copies the 494M parameters to the second GPU and reduces the gradients back, which made a step take 2.33 s; one GPU avoids that copy. 256-subword windows, length-bucketed batches.",
-  "streaming_check": 5,
+  "streaming_check": 2,
   "keep_checkpoints": true,
   "runs": [
     {

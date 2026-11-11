@@ -89,6 +89,10 @@ class DualHeadModel(nn.Module):
             for p in self.backbone.norm.parameters():
                 p.requires_grad = True
 
+    def enable_gradient_checkpointing(self) -> None:
+        """Recompute the backbone activations in the backward pass: less GPU memory, about a third more compute."""
+        self.backbone.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+
     def count_parameters(self) -> tuple[int, int]:
         total = sum(p.numel() for p in self.parameters())
         trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)

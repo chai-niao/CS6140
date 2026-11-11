@@ -1,7 +1,7 @@
 """Evaluate a saved run and check that streaming inference matches the training view.
 
     python evaluate.py --run_dir runs/xlmr_full                    # test metrics with the dev thresholds of the run
-    python evaluate.py --run_dir runs/xlmr_full --streaming_check 5
+    python evaluate.py --run_dir runs/xlmr_full --streaming_check 2   # 2 random + the longest conversation per pair
 
 Streaming check: the model is fed one conversation word by word (update1.dataset.iter_prefixes),
 exactly like a keyboard receiving words, and P(switch) after each word is compared with the
@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import random
 import sys
 from pathlib import Path
 
@@ -20,36 +21,61 @@ import torch
 
 import setup_path  # noqa: F401
 from common import markdown_table
-from data import available_pairs, load_convs
-from dataset import PrefixWindowDataset, bos_id, encode_conversation, get_tokenizer, iter_prefixes
+from data import available_pairs, load_convs, pair_of
+from dataset import PrefixWindowDataset, encode_conversation, get_tokenizer, iter_prefixes
 from engine import amp_dtype_for, evaluate_convs, get_device
 from model import load_model
 
 
+def pick_streaming_convs(convs: list[dict], n_per_pair: int, seed: int = 0) -> list[dict]:
+    """n random conversations of every pair plus the longest one of the pair, so that every tokenizer path
+    (with and without spaces between words, romanized Hindi, ...) and conversations that span several
+    training windows are checked."""
+    by_pair: dict[str, list[dict]] = {}
+    for c in convs:
+        by_pair.setdefault(pair_of(c["conv_id"]), []).append(c)
+    out = []
+    for pair, cs in by_pair.items():
+        rng = random.Random(f"{seed}-{pair}")
+        chosen = rng.sample(cs, min(n_per_pair, len(cs)))
+        longest = max(cs, key=lambda c: len(c["words"]))
+        if longest not in chosen:
+            chosen.append(longest)
+        out.extend(chosen)
+    return out
+
+
 @torch.no_grad()
-def streaming_consistency(model, convs: list[dict], tok, device, n: int = 5, max_subwords: int = 200) -> list[dict]:
-    """For up to n short conversations: max |P_stream(switch) - P_window(switch)| over all words."""
+def streaming_consistency(model, convs: list[dict], tok, device, max_len: int, stride: int) -> list[dict]:
+    """For every conversation: max |P_stream(switch) - P_window(switch)| over its labelled words.
+
+    P_window comes from the training / evaluation windows (PrefixWindowDataset, max_len and stride of the run);
+    P_stream feeds the words one at a time with iter_prefixes, whose context is capped at the window that scores
+    the word. Both views use only the prefix, so they must agree for short and long conversations alike."""
     model.eval()
     out = []
     for conv in convs:
         e = encode_conversation(conv, tok)
-        if len(e["input_ids"]) > max_subwords:
-            continue
-        window = PrefixWindowDataset([conv], tok, max_len=max_subwords + 8, stride=max_subwords)[0]
-        ids = torch.tensor([window["input_ids"]], device=device)
-        sw_logits, _ = model(ids, torch.ones_like(ids))
-        p_window = torch.softmax(sw_logits.float(), -1)[0, :, 1]
-        worst = 0.0
-        words = 0
-        for _, prefix, _, _ in iter_prefixes(conv, tok):
+        p_window = []
+        for item in PrefixWindowDataset([conv], tok, max_len=max_len, stride=stride):  # windows in order
+            ids = torch.tensor([item["input_ids"]], device=device)
+            sw_logits, _ = model(ids, torch.ones_like(ids))
+            labelled = torch.tensor(item["y_sw"], device=device) >= 0
+            p_window.extend(torch.softmax(sw_logits.float(), -1)[0, :, 1][labelled].tolist())
+        p_stream, longest_prefix = [], 0
+        for _, prefix, y_sw, _ in iter_prefixes(conv, tok, max_len=max_len, stride=stride):
+            if y_sw < 0:  # the last word has no target and is not scored by the windows either
+                continue
             ids_p = torch.tensor([prefix], device=device)
             sw_p, _ = model(ids_p, torch.ones_like(ids_p))
-            p_stream = torch.softmax(sw_p.float(), -1)[0, -1, 1]
-            worst = max(worst, abs(float(p_stream) - float(p_window[len(prefix) - 1])))
-            words += 1
-        out.append({"conv_id": conv["conv_id"], "words": words, "subwords": len(e["input_ids"]), "max_abs_diff": worst})
-        if len(out) >= n:
-            break
+            p_stream.append(float(torch.softmax(sw_p.float(), -1)[0, -1, 1]))
+            longest_prefix = max(longest_prefix, len(prefix))
+        if len(p_stream) != len(p_window):
+            raise RuntimeError(f"{conv['conv_id']}: {len(p_stream)} streaming vs {len(p_window)} window predictions")
+        worst = max((abs(a - b) for a, b in zip(p_stream, p_window)), default=0.0)
+        out.append({"conv_id": conv["conv_id"], "words": len(conv["words"]), "subwords": len(e["input_ids"]),
+                    "windows": max(1, -(-max(len(e["input_ids"]) - max_len, 0) // stride) + 1),
+                    "longest_prefix": longest_prefix, "max_abs_diff": worst})
     return out
 
 
@@ -63,7 +89,8 @@ def main(argv=None) -> dict:
     ap.add_argument("--batch_size", type=int, default=64)
     ap.add_argument("--device", default="auto")
     ap.add_argument("--amp", default="auto", help="auto | bf16 | fp16 | 0")
-    ap.add_argument("--streaming_check", type=int, default=0, help="number of conversations for the streaming consistency check")
+    ap.add_argument("--streaming_check", type=int, default=0,
+                    help="random conversations per pair for the streaming consistency check (the longest of each pair is added)")
     args = ap.parse_args(argv)
 
     run_dir = Path(args.run_dir)
@@ -95,16 +122,24 @@ def main(argv=None) -> dict:
     result = {"summary": res["summary"]}
     if args.streaming_check:
         model.float()
-        checks = streaming_consistency(model, convs, tok, device, n=args.streaming_check)
-        lines = [f"Streaming consistency on {len(checks)} conversations ({config['model']}, fp32, {device}):",
-                 markdown_table(["conv_id", "words", "subwords", "max |P_stream - P_window|"],
-                                [[c["conv_id"], c["words"], c["subwords"], f"{c['max_abs_diff']:.2e}"] for c in checks])]
+        max_len, stride = config.get("max_len", 128), config.get("stride", 64)
+        picked = pick_streaming_convs(convs, args.streaming_check)
+        checks = streaming_consistency(model, picked, tok, device, max_len, stride)
+        lines = [f"Streaming consistency ({config['model']}, fp32, {device}): {len(checks)} conversations, "
+                 f"{args.streaming_check} random + the longest of each of {len({pair_of(c['conv_id']) for c in checks})} pairs; "
+                 f"windows of {max_len} subwords, stride {stride}; the streaming prefix is capped at the window that scores the word.",
+                 markdown_table(["conv_id", "words", "subwords", "windows", "longest prefix", "max |P_stream - P_window|"],
+                                [[c["conv_id"], c["words"], c["subwords"], c["windows"], c["longest_prefix"], f"{c['max_abs_diff']:.2e}"]
+                                 for c in checks])]
         worst = max((c["max_abs_diff"] for c in checks), default=0.0)
-        lines.append(f"\nworst difference {worst:.2e}: {'identical up to floating point noise' if worst < 1e-3 else 'MISMATCH'}")
+        multi = sum(1 for c in checks if c["windows"] > 1)
+        lines.append(f"\n{multi} of {len(checks)} conversations span more than one window. "
+                     f"Worst difference {worst:.2e}: {'identical up to floating point noise' if worst < 1e-3 else 'MISMATCH'}")
         text = "\n".join(lines)
         print(text)
         (run_dir / "streaming_check.md").write_text(text + "\n", encoding="utf-8")
         result["streaming_max_abs_diff"] = worst
+        result["streaming_conversations"] = len(checks)
     return result
 
 

@@ -16,19 +16,25 @@ and (b) the most frequent bin after the current token.
 sigma (universality) = standard deviation (population) of the token-lookup F1 across pairs.
 
 Writes results/baseline_f1.csv and results/baseline_f1.md.
+
+    python baselines.py                                    # Update 1 numbers (all dev / test conversations)
+    python baselines.py --exclude ../update2/duplicates.json --out_dir ../update2/results --name baseline_f1_dedup
+                                                           # same dev / test conversations as the Update 2 models
 """
 from __future__ import annotations
 
+import argparse
+import json
 import math
+from pathlib import Path
 from collections import Counter, defaultdict
 
 import pandas as pd
 
-from common import RESULTS_DIR, available_pairs, load_split, markdown_table
+from common import RESULTS_DIR, available_pairs, best_threshold, load_split, markdown_table, prf
 from lid import PAIRS
 
 ALPHA = 2.0  # smoothing strength toward the prior
-THRESHOLDS = [i / 20 for i in range(1, 20)]  # 0.05 ... 0.95
 
 
 import re
@@ -42,16 +48,6 @@ def key_of(word: str, strip_punct: bool = False) -> str:
     how much of the baseline's score comes from punctuation alone."""
     w = word.lower()
     return _PUNCT_EDGES.sub("", w) or w if strip_punct else w
-
-
-def prf(y_true: list[int], y_pred: list[int]) -> tuple[float, float, float]:
-    tp = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 1)
-    fp = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 1)
-    fn = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 0)
-    precision = tp / (tp + fp) if tp + fp else 0.0
-    recall = tp / (tp + fn) if tp + fn else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
-    return precision, recall, f1
 
 
 def positions(convs, strip_punct: bool = False):
@@ -99,16 +95,14 @@ class TokenLookup:
 
 
 def tune_threshold(scores: list[float], y: list[int]) -> float:
-    best_t, best_f1 = 0.5, -1.0
-    for t in THRESHOLDS:
-        f1 = prf(y, [1 if s >= t else 0 for s in scores])[2]
-        if f1 > best_f1:
-            best_t, best_f1 = t, f1
-    return best_t
+    return best_threshold(scores, y)[0]
 
 
-def evaluate_pair(pair: str) -> dict:
-    train, dev, test = (load_split(pair, s) for s in ("train", "dev", "test"))
+def evaluate_pair(pair: str, exclude: dict[str, set[str]] | None = None) -> dict:
+    """`exclude` maps a split name to conversation ids left out of it (duplicates of an earlier split)."""
+    exclude = exclude or {}
+    train, dev, test = ([c for c in load_split(pair, s) if c["conv_id"] not in exclude.get(s, set())]
+                        for s in ("train", "dev", "test"))
     model = TokenLookup(train)
 
     dev_pos = list(positions(dev))
@@ -155,13 +149,23 @@ def evaluate_pair(pair: str) -> dict:
     }
 
 
-def main() -> None:
-    rows = [evaluate_pair(p) for p in available_pairs()]
+def main(argv=None) -> None:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--exclude", default=None,
+                    help="JSON file {split: [conv_id, ...]} of conversations to leave out (update2/duplicates.json)")
+    ap.add_argument("--out_dir", default=str(RESULTS_DIR))
+    ap.add_argument("--name", default="baseline_f1", help="output file stem")
+    args = ap.parse_args(argv)
+    exclude = ({k: set(v) for k, v in json.loads(Path(args.exclude).read_text(encoding="utf-8")).items()}
+               if args.exclude else {})
+    out_dir = Path(args.out_dir)
+
+    rows = [evaluate_pair(p, exclude) for p in available_pairs()]
     df = pd.DataFrame(rows)
     f1 = df["F1_token"]
     mean, sigma = f1.mean(), f1.std(ddof=0)
-    RESULTS_DIR.mkdir(exist_ok=True)
-    df.to_csv(RESULTS_DIR / "baseline_f1.csv", index=False)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_dir / f"{args.name}.csv", index=False)
 
     cols = ["pair", "switch_rate_%", "F1_never", "F1_always", "F1_lang_prior", "P_token", "R_token", "F1_token", "F1_token_nopunct",
             "threshold_token", "dur_acc_majority", "dur_acc_token"]
@@ -174,10 +178,13 @@ def main() -> None:
         f"'always' reference: mean F1 = {df['F1_always'].mean():.3f}. Duration accuracy, majority bin: mean {df['dur_acc_majority'].mean():.3f}; "
         f"token bin: mean {df['dur_acc_token'].mean():.3f}."
     )
-    (RESULTS_DIR / "baseline_f1.md").write_text("# Naive baselines, Anticipatory F1 on the test split\n\n" + table + "\n" + summary + "\n", encoding="utf-8")
+    if exclude:
+        summary += (f"\nExcluded as duplicates of an earlier split: {len(exclude.get('dev', []))} dev and "
+                    f"{len(exclude.get('test', []))} test conversations ({args.exclude}).")
+    (out_dir / f"{args.name}.md").write_text("# Naive baselines, Anticipatory F1 on the test split\n\n" + table + "\n" + summary + "\n", encoding="utf-8")
     print(table)
     print(summary)
-    print(f"\nwrote {RESULTS_DIR / 'baseline_f1.csv'} and baseline_f1.md")
+    print(f"\nwrote {out_dir / (args.name + '.csv')} and {args.name}.md")
 
 
 if __name__ == "__main__":

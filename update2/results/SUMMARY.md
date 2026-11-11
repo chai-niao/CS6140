@@ -82,3 +82,43 @@ Feeding a conversation one word at a time gives the same P(switch) as one pass o
 * `run_logs/<run>/`: `config.json`, `summary.json`, `train_log.csv` (every 20 steps), `dev_log.csv` (every 500 steps),
   `test_metrics.csv` and `dev_metrics.csv` (per pair), `streaming_check.md`, `train.log`.
 * Model checkpoints (`model.pt`, 0.5 to 1 GB) are not in the repository.
+
+## Code review fixes and local rerun (2026-11-11)
+
+A review of the Update 2 code found ten issues. All are fixed on the branch `update2-review-fixes`; both models
+were then retrained once on a single RTX 5070 Ti Laptop GPU (12 GB, bfloat16, seed 42, same data and schedule:
+2 epochs, effective batch 32, 256-subword windows). Logs: `run_logs/model_a_xlmr_local`, `run_logs/model_b_qwen_local`;
+figures and tables: `local_rerun/`.
+
+| fix | what changed |
+|---|---|
+| gradient accumulation | each micro-batch loss is divided by the class-weighted target count of the whole optimizer step, so an accumulated step equals one large batch; before, every micro-batch counted equally, and length-bucketed micro-batches of short windows were over-weighted (Model B only, 4 x 8) |
+| streaming check | 2 random conversations plus the longest one of every pair (45 in total) instead of the first 5 short conversations, which were all Arabic; compared with the real evaluation windows, including conversations that span several windows |
+| streaming context | `iter_prefixes(..., max_len, stride)` limits the prefix to the training window that scores the word; XLM-R can no longer run past its 512 positions in a long conversation |
+| baseline test set | `update1/baselines.py --exclude duplicates.json` scores the baseline on the same dev / test conversations as the models (`baseline_f1_dedup.csv`) |
+| fp16 overflow | steps skipped by GradScaler are counted, logged and do not advance the LR schedule |
+| `--duration_weight` | only `none` or `balanced`; other values raise an error instead of silently meaning `balanced` |
+| best checkpoint | kept only in `model.pt` (no second copy in RAM) |
+| host syncs | one per optimizer step instead of four per micro-batch |
+| dev evaluation | the windows of the periodic dev subset are built once |
+| shared metrics | F1 and threshold tuning live in `update1/common.py` and are used by the baseline and the models |
+
+New option `--gradient_checkpointing 1`: Model B runs with micro-batches of 8 x 4 at 0.6 s per step and 9.3 GB
+(4 x 8 without it needed 10.2 GB and spilled out of the 12 GB GPU).
+
+| run | train min | mean F1 | sigma | F1 at 0.5 | duration acc | F1 tag | F1 inter | F1 intra | streaming check |
+|---|---|---|---|---|---|---|---|---|---|
+| naive baseline, duplicates excluded | none | 0.644 | 0.068 | n/a | 0.617 | n/a | n/a | n/a | n/a |
+| Model A, Kaggle (2 x T4) | 41 | 0.784 | 0.070 | 0.714 | 0.694 | 0.842 | 0.833 | 0.682 | 5 Arabic, 5.1e-7 |
+| Model A, local, fixed code | 10 | 0.784 | 0.070 | 0.713 | 0.694 | 0.843 | 0.834 | 0.680 | 45 (6 multi-window), 2.7e-6 |
+| Model B, Kaggle (1 x T4) | 129 | 0.805 | 0.064 | 0.745 | 0.704 | 0.859 | 0.853 | 0.710 | 5 Arabic, 3.0e-6 |
+| Model B, local, fixed code | 59 | 0.807 | 0.063 | 0.743 | 0.704 | 0.860 | 0.854 | 0.711 | 45 (10 multi-window), 5.7e-6 |
+
+* Every conclusion above holds: Model B is ahead of Model A on all 15 pairs, the four weakest pairs are the same,
+  and the convergence curves show the same epoch-2 memorization for Model B.
+* The loss fix moves Model B by +0.002 mean F1, well inside seed noise; Model A is unchanged, as expected
+  (it used no accumulation, so its loss was already the mean over the batch).
+* Excluding the 8 duplicate test conversations changes no baseline F1 at three decimals (Cantonese duration
+  accuracy 0.607 -> 0.606).
+* Streaming and windowed predictions agree to 5.7e-6 or better on all 45 conversations, including the 16
+  conversation-model cases that need more than one window.

@@ -91,13 +91,16 @@ def predict(model, loader, device: torch.device, amp_dtype=None, cs_type_of: dic
 
 
 def evaluate_convs(model, convs: list[dict], tok, device: torch.device, amp_dtype=None, loss_fn=None,
-                   thresholds: dict[str, float] | None = None, batch_size: int = 32, max_len: int = 128, stride: int = 64):
+                   thresholds: dict[str, float] | None = None, batch_size: int = 32, max_len: int = 128, stride: int = 64,
+                   loader=None):
     """Metrics of `model` on a list of conversations.
 
     Without `thresholds` the per-pair decision thresholds are tuned on these conversations
-    (dev split); with them, they are applied as they are (test split).
+    (dev split); with them, they are applied as they are (test split). `loader` reuses windows built
+    once for `convs` (the periodic dev evaluation) instead of tokenizing them again.
     Returns dict(rows, summary, thresholds, losses, records)."""
-    loader = make_loader(convs, tok, batch_size=batch_size, max_len=max_len, stride=stride, shuffle=False)
+    if loader is None:
+        loader = make_loader(convs, tok, batch_size=batch_size, max_len=max_len, stride=stride, shuffle=False)
     cs_type_of = {c["conv_id"]: c.get("cs_type", "unknown") for c in convs}
     records, losses = predict(model, loader, device, amp_dtype, cs_type_of, loss_fn)
     if thresholds is None:

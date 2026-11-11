@@ -1,6 +1,6 @@
 {
   "comment": "Model A on all training conversations of the 15 pairs: 2 epochs, batch 32, 256-subword windows with length-bucketed batches.",
-  "streaming_check": 5,
+  "streaming_check": 2,
   "keep_checkpoints": true,
   "runs": [
     {

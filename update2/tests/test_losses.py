@@ -66,3 +66,31 @@ def test_duration_targets_exist_only_at_switches():
     y_sw, y_dur = make_labels(langs)
     for s, d in zip(y_sw, y_dur):
         assert (d != IGNORE) == (s == 1)
+
+
+def test_accumulated_micro_batches_equal_one_large_batch():
+    # micro-batches with very different numbers of targets: with the step normalizers the summed micro-batch
+    # losses (and gradients) equal the loss of the concatenated batch
+    torch.manual_seed(0)
+    loss_fn = MultiTaskLoss(1.0, 0.7, switch_weight=[1.0, 6.5], duration_weight=[0.8, 1.1, 1.3])
+    sw = torch.randn(3, 10, 2, requires_grad=True)
+    dur = torch.randn(3, 10, 3, requires_grad=True)
+    y_sw = torch.randint(0, 2, (3, 10))
+    y_sw[0, 2:] = IGNORE  # a short micro-batch: 2 targets against 10 and 10
+    y_dur = torch.where(y_sw == 1, torch.randint(0, 3, (3, 10)), torch.full((3, 10), IGNORE))
+
+    full = loss_fn(sw, dur, y_sw, y_dur)
+    g_full = torch.autograd.grad(full["total"], (sw, dur))
+
+    parts = [(sw[i:i + 1], dur[i:i + 1], y_sw[i:i + 1], y_dur[i:i + 1]) for i in range(3)]
+    norm_sw = sum(loss_fn.normalizers(p[2], p[3])[0] for p in parts)
+    norm_dur = sum(loss_fn.normalizers(p[2], p[3])[1] for p in parts)
+    acc = {k: sum(loss_fn(*p, norm_sw, norm_dur)[k] for p in parts) for k in ("total", "switch", "duration")}
+    g_acc = torch.autograd.grad(acc["total"], (sw, dur))
+    for k in acc:
+        assert torch.allclose(acc[k], full[k], atol=1e-6)
+    for a, b in zip(g_acc, g_full):
+        assert torch.allclose(a, b, atol=1e-6)
+    # a plain mean per micro-batch (the old behaviour) gives the short micro-batch far too much weight
+    old = sum(loss_fn(*p)["total"] for p in parts) / 3
+    assert not torch.allclose(old, full["total"], atol=1e-3)

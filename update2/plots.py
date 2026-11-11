@@ -32,7 +32,8 @@ GRAY = "#B8B8B8"      # naive baseline (reference, hatched)
 INK = "#222222"
 MUTED = "#6B6B6B"
 SERIES_COLORS = [TEAL, ORANGE, "#5B6472", "#8E5BB5"]  # fixed order, never cycled
-DEFAULT_BASELINE = setup_path.UPDATE1_DIR / "results" / "baseline_f1.csv"
+# naive baseline on the same dev / test conversations as the models (duplicates excluded, update1/baselines.py --exclude)
+DEFAULT_BASELINE = setup_path.UPDATE2_DIR / "results" / "baseline_f1_dedup.csv"
 PAIR_LABEL = {"Arabic_eng": "Arabic", "Can_Eng": "Cantonese", "Chinese_eng": "Mandarin", "French_eng": "French",
               "German_Eng": "German", "German_French": "German-French", "Hindi_eng": "Hindi", "Italian_eng": "Italian",
               "Japanese_eng": "Japanese", "Korean_eng": "Korean", "Malay_eng": "Malay", "Philippines_eng": "Filipino",
@@ -237,7 +238,7 @@ def main(argv=None) -> None:
     ap.add_argument("--runs", nargs="*", default=[], help='"display name=run_dir" ...')
     ap.add_argument("--sweep", nargs="*", default=[],
                     help='"lambda_duration value=run_dir" ... plus named extra runs, e.g. "no class weights=runs/sweep_lam1_noweight"')
-    ap.add_argument("--baseline", default=str(DEFAULT_BASELINE), help="baseline_f1.csv of Update 1 ('' to omit)")
+    ap.add_argument("--baseline", default=str(DEFAULT_BASELINE), help="baseline CSV written by update1/baselines.py ('' to omit)")
     ap.add_argument("--out_dir", default="results")
     args = ap.parse_args(argv)
     out = Path(args.out_dir)

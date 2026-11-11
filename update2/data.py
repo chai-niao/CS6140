@@ -120,6 +120,8 @@ def duration_class_weight(convs: list[dict], mode: str) -> list[float] | None:
     """'none', or 'balanced' = inverse bin frequency normalised to mean 1."""
     if mode == "none":
         return None
+    if mode != "balanced":
+        raise ValueError(f"duration class weight must be 'none' or 'balanced', not {mode!r}")
     counts = duration_counts(convs)
     total = sum(counts)
     return [total / (len(counts) * max(k, 1)) for k in counts]
