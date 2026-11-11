@@ -1,0 +1,15 @@
+{
+  "comment": "Precision check on the T4: fp16 vs bf16 step time and loss for both backbones, 40 optimizer steps each.",
+  "streaming_check": 0,
+  "keep_checkpoints": false,
+  "runs": [
+    {"name": "speed_xlmr_fp16", "args": ["--model", "xlmr", "--amp", "fp16", "--pairs", "Spanish_eng", "Hindi_eng", "--max_train_convs", "1000", "--max_dev_convs", "30",
+                                         "--max_test_convs", "50", "--epochs", "1", "--max_steps", "40", "--batch_size", "32", "--eval_every", "0", "--log_every", "10", "--save_model", "0"]},
+    {"name": "speed_xlmr_bf16", "args": ["--model", "xlmr", "--amp", "bf16", "--pairs", "Spanish_eng", "Hindi_eng", "--max_train_convs", "1000", "--max_dev_convs", "30",
+                                         "--max_test_convs", "50", "--epochs", "1", "--max_steps", "40", "--batch_size", "32", "--eval_every", "0", "--log_every", "10", "--save_model", "0"]},
+    {"name": "speed_qwen_fp16", "args": ["--model", "qwen", "--amp", "fp16", "--pairs", "Spanish_eng", "Hindi_eng", "--max_train_convs", "1000", "--max_dev_convs", "30",
+                                         "--max_test_convs", "50", "--epochs", "1", "--max_steps", "40", "--batch_size", "16", "--grad_accum", "2", "--eval_every", "0", "--log_every", "10", "--save_model", "0"]},
+    {"name": "speed_qwen_bf16", "args": ["--model", "qwen", "--amp", "bf16", "--pairs", "Spanish_eng", "Hindi_eng", "--max_train_convs", "1000", "--max_dev_convs", "30",
+                                         "--max_test_convs", "50", "--epochs", "1", "--max_steps", "40", "--batch_size", "16", "--grad_accum", "2", "--eval_every", "0", "--log_every", "10", "--save_model", "0"]}
+  ]
+}

@@ -1,0 +1,27 @@
+== train.py  2026-11-10 21:39:05  out_dir = /kaggle/working/runs/speed_xlmr_fp16
+device cuda, mixed precision torch.float16, torch 2.11.0+cu130
+2 pairs: Spanish_eng Hindi_eng
+conversations: train 2,000, dev 1,600 (periodic eval on 60), test 100
+training positions 106,663, switches 18,972 (17.8%), duration bins [8504, 4945, 5523]
+2,223 training windows of <= 128 subwords, 70 batches per epoch (tokenized in 1s)
+xlm-roberta-base (XLMRobertaModel, causal mask via is_decoder=True), 12 layers, hidden 768, 277.5M parameters, 277.5M trainable
+L = 1 * CE_switch + 1 * CE_duration, ignore_index = -1, switch class weights [1.0, 4.622127532958984], duration class weights [0.7436500191688538, 1.2788676023483276, 1.145029902458191]
+DataParallel over 2 GPUs
+40 optimizer steps (1 epochs x 70), warmup 2, lr 2e-05, head lr 0.0001, batch 32 x accumulation 1
+step     10/40  epoch 0.14  loss 1.8347  switch 0.6601  duration 1.1746  lr 1.58e-05  0.66s/step
+step     20/40  epoch 0.29  loss 1.6187  switch 0.5882  duration 1.0305  lr 1.05e-05  0.41s/step
+step     30/40  epoch 0.43  loss 1.5886  switch 0.5587  duration 1.0298  lr 5.26e-06  0.41s/step
+step     40/40  epoch 0.57  loss 1.5587  switch 0.5533  duration 1.0054  lr 0.00e+00  0.41s/step
+  dev @ step 40: loss 1.5418 (switch 0.5854, duration 0.9564), mean F1@0.5 0.4997, sigma 0.0591, dur acc 0.5451
+training finished: 40 steps in 0.3 min (0.51 s/step), 0 batches skipped for a non-finite loss
+
+# speed_xlmr_fp16: test split
+
+| pair | switch_rate_% | threshold | P | R | F1 | F1_at_0.5 | dur_acc | F1_macro_by_type |
+|---|---|---|---|---|---|---|---|---|
+| Hindi_eng | 24.7 | 0.5 | 0.3372 | 0.7076 | 0.4567 | 0.4567 | 0.4727 | 0.4537 |
+| Spanish_eng | 12.4 | 0.85 | 0.7755 | 0.7015 | 0.7367 | 0.6352 | 0.5846 | 0.7062 |
+
+Mean Anticipatory F1 = 0.5967, sigma = 0.1400 (min 0.457 Hindi_eng, max 0.737 Spanish_eng); mean F1 at threshold 0.5 = 0.5459; duration accuracy at true switches = 0.5287; macro F1 by switch type = 0.5799.
+
+wrote /kaggle/working/runs/speed_xlmr_fp16/summary.json

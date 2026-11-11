@@ -1,0 +1,27 @@
+== train.py  2026-11-10 21:41:06  out_dir = /kaggle/working/runs/speed_qwen_fp16
+device cuda, mixed precision torch.float16, torch 2.11.0+cu130
+2 pairs: Spanish_eng Hindi_eng
+conversations: train 2,000, dev 1,600 (periodic eval on 60), test 100
+training positions 106,663, switches 18,972 (17.8%), duration bins [8504, 4945, 5523]
+2,782 training windows of <= 128 subwords, 174 batches per epoch (tokenized in 1s)
+Qwen/Qwen2.5-0.5B (Qwen2Model, causal by construction), 24 layers, hidden 896, 494.0M parameters, 494.0M trainable
+L = 1 * CE_switch + 1 * CE_duration, ignore_index = -1, switch class weights [1.0, 4.622127532958984], duration class weights [0.7436500191688538, 1.2788676023483276, 1.145029902458191]
+DataParallel over 2 GPUs
+40 optimizer steps (1 epochs x 87), warmup 2, lr 2e-05, head lr 0.0001, batch 16 x accumulation 2
+step     10/40  epoch 0.11  loss 1.5844  switch 0.5619  duration 1.0225  lr 1.58e-05  1.50s/step
+step     20/40  epoch 0.23  loss 1.3113  switch 0.4140  duration 0.8973  lr 1.05e-05  1.38s/step
+step     30/40  epoch 0.34  loss 1.2385  switch 0.3724  duration 0.8661  lr 5.26e-06  1.40s/step
+step     40/40  epoch 0.46  loss 1.1986  switch 0.3589  duration 0.8397  lr 0.00e+00  1.40s/step
+  dev @ step 40: loss 1.2425 (switch 0.3916, duration 0.8509), mean F1@0.5 0.6425, sigma 0.0123, dur acc 0.6152
+training finished: 40 steps in 1.0 min (1.47 s/step), 0 batches skipped for a non-finite loss
+
+# speed_qwen_fp16: test split
+
+| pair | switch_rate_% | threshold | P | R | F1 | F1_at_0.5 | dur_acc | F1_macro_by_type |
+|---|---|---|---|---|---|---|---|---|
+| Hindi_eng | 24.7 | 0.7 | 0.614 | 0.7424 | 0.6722 | 0.6367 | 0.6091 | 0.6693 |
+| Spanish_eng | 12.4 | 0.7 | 0.8113 | 0.7938 | 0.8025 | 0.7606 | 0.6677 | 0.7825 |
+
+Mean Anticipatory F1 = 0.7373, sigma = 0.0651 (min 0.672 Hindi_eng, max 0.802 Spanish_eng); mean F1 at threshold 0.5 = 0.6986; duration accuracy at true switches = 0.6384; macro F1 by switch type = 0.7259.
+
+wrote /kaggle/working/runs/speed_qwen_fp16/summary.json

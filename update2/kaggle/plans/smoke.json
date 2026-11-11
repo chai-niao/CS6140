@@ -1,0 +1,11 @@
+{
+  "comment": "Checks the whole Kaggle pipeline end to end in a few minutes: real backbones, 2 pairs, 60 optimizer steps each.",
+  "streaming_check": 3,
+  "keep_checkpoints": false,
+  "runs": [
+    {"name": "smoke_xlmr", "args": ["--model", "xlmr", "--pairs", "Spanish_eng", "Hindi_eng", "--max_train_convs", "300", "--max_dev_convs", "50",
+                                    "--max_test_convs", "100", "--epochs", "1", "--max_steps", "60", "--batch_size", "32", "--eval_every", "30", "--log_every", "10"]},
+    {"name": "smoke_qwen", "args": ["--model", "qwen", "--pairs", "Spanish_eng", "Hindi_eng", "--max_train_convs", "300", "--max_dev_convs", "50",
+                                    "--max_test_convs", "100", "--epochs", "1", "--max_steps", "60", "--batch_size", "16", "--grad_accum", "2", "--eval_every", "30", "--log_every", "10"]}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+ "dev": [
+  "Arabic_eng_5957",
+  "Can_Eng_115947",
+  "Can_Eng_17090",
+  "Can_Eng_19136",
+  "Can_Eng_33030",
+  "Can_Eng_45048",
+  "German_French_6564"
+ ],
+ "test": [
+  "Can_Eng_23705",
+  "Can_Eng_53753",
+  "Can_Eng_62994",
+  "Can_Eng_72921",
+  "Can_Eng_79618",
+  "German_Eng_802",
+  "Spanish_eng_2897",
+  "Spanish_eng_5925"
+ ]
+}

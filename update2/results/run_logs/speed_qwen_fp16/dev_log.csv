@@ -1,0 +1,2 @@
+step,epoch,dev_loss_total,dev_loss_switch,dev_loss_duration,dev_mean_F1_at_0.5,dev_sigma_F1_at_0.5,dev_mean_F1_tuned,dev_mean_dur_acc,elapsed_min
+40,0.46,1.2425,0.3916,0.8509,0.6425,0.0123,0.6728,0.6152,1.0
