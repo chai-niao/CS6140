@@ -227,7 +227,7 @@ def demo(pair: str, split: str, keys: list[str]) -> None:
         print(f"\nwords {len(conv['words'])}, subwords {len(e['input_ids'])}, "
               f"labelled positions {sum(1 for v in e['y_sw'] if v >= 0)} (one per word), "
               f"subwords per word {len(e['input_ids']) / len(conv['words']):.2f}")
-        loader = make_loader(convs[:64], tok, batch_size=8, max_len=128, stride=64)
+        loader = make_loader(convs[:64], tok, batch_size=8, max_len=128, stride=64, shuffle=False)  # fixed order: reproducible demo
         batch = next(iter(loader))
         print("\nfirst batch:")
         for k in ("input_ids", "attention_mask", "lang_ids", "y_sw", "y_dur"):

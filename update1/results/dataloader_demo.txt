@@ -19,12 +19,12 @@ pair = Spanish_eng, split = test, conversations = 800, demo conversation = Spani
 words 25, subwords 41, labelled positions 24 (one per word), subwords per word 1.64
 
 first batch:
-  input_ids       (8, 129)  dtype=torch.int64
-  attention_mask  (8, 129)  dtype=torch.int64
-  lang_ids        (8, 129)  dtype=torch.int64
-  y_sw            (8, 129)  dtype=torch.int64
-  y_dur           (8, 129)  dtype=torch.int64
-  labelled positions in batch: 371, of which switches: 45; windows in dataset: 70
+  input_ids       (8, 98)  dtype=torch.int64
+  attention_mask  (8, 98)  dtype=torch.int64
+  lang_ids        (8, 98)  dtype=torch.int64
+  y_sw            (8, 98)  dtype=torch.int64
+  y_dur           (8, 98)  dtype=torch.int64
+  labelled positions in batch: 355, of which switches: 50; windows in dataset: 70
 
 streaming trace (first 8 words):
   after word  1 (          'Ayer'): prefix =   3 subwords -> targets y_sw= 0 y_dur=-1
@@ -55,12 +55,12 @@ streaming trace (first 8 words):
 words 25, subwords 35, labelled positions 24 (one per word), subwords per word 1.40
 
 first batch:
-  input_ids       (8, 111)  dtype=torch.int64
-  attention_mask  (8, 111)  dtype=torch.int64
-  lang_ids        (8, 111)  dtype=torch.int64
-  y_sw            (8, 111)  dtype=torch.int64
-  y_dur           (8, 111)  dtype=torch.int64
-  labelled positions in batch: 373, of which switches: 40; windows in dataset: 71
+  input_ids       (8, 99)  dtype=torch.int64
+  attention_mask  (8, 99)  dtype=torch.int64
+  lang_ids        (8, 99)  dtype=torch.int64
+  y_sw            (8, 99)  dtype=torch.int64
+  y_dur           (8, 99)  dtype=torch.int64
+  labelled positions in batch: 355, of which switches: 50; windows in dataset: 71
 
 streaming trace (first 8 words):
   after word  1 (          'Ayer'): prefix =   2 subwords -> targets y_sw= 0 y_dur=-1
