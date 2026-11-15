@@ -9,6 +9,10 @@ Backbones:
     Model A  "xlmr"  xlm-roberta-base, an encoder made causal with config.is_decoder = True
     Model B  "qwen"  Qwen/Qwen2.5-0.5B, a decoder that is causal by construction
 Any other Hugging Face model name is accepted; encoder types get the causal mask.
+
+Attention ablation (Update 1 feedback: "train without the mask, test with it"): an encoder backbone can be
+built with attention="bidirectional", so that position t also attends to the rest of its window, and switched
+with set_attention() before evaluation. A decoder backbone has no bidirectional mode.
 """
 from __future__ import annotations
 
@@ -20,6 +24,7 @@ BACKBONES = {"xlmr": "xlm-roberta-base", "qwen": "Qwen/Qwen2.5-0.5B"}
 # bidirectional by default: the causal attention mask has to be switched on
 ENCODER_TYPES = {"xlm-roberta", "roberta", "bert"}
 N_DURATION_BINS = 3
+ATTENTION_MODES = ("causal", "bidirectional")
 
 
 def tiny_config(key: str, vocab_size: int):
@@ -38,15 +43,18 @@ def tiny_config(key: str, vocab_size: int):
 
 
 class DualHeadModel(nn.Module):
-    def __init__(self, backbone: str = "xlmr", dropout: float = 0.1, tiny_vocab: int | None = None):
+    def __init__(self, backbone: str = "xlmr", dropout: float = 0.1, tiny_vocab: int | None = None,
+                 attention: str = "causal"):
         super().__init__()
         name = BACKBONES.get(backbone, backbone)
         self.backbone_key = backbone
         self.backbone_name = name
         config = tiny_config(backbone, tiny_vocab) if tiny_vocab is not None else AutoConfig.from_pretrained(name)
         self.is_encoder_type = config.model_type in ENCODER_TYPES
+        check_attention(attention, self.is_encoder_type, name)
+        self.attention = attention
         if self.is_encoder_type:
-            config.is_decoder = True  # causal attention mask (Model A)
+            config.is_decoder = attention == "causal"  # causal attention mask (Model A)
         config.use_cache = False
         if tiny_vocab is not None:
             self.backbone = AutoModel.from_config(config)
@@ -67,6 +75,24 @@ class DualHeadModel(nn.Module):
         h = self.backbone(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
         h = self.dropout(self.head_norm(h))
         return self.switch_head(h), self.duration_head(h)
+
+    def set_attention(self, attention: str) -> None:
+        """Switch an encoder backbone between the causal and the bidirectional mask without touching the weights.
+
+        Two settings decide whether a self-attention layer is causal: config.is_decoder, read at every forward
+        pass to build the mask, and the is_causal flag that each attention module copies from the config when
+        it is built (used by SDPA when no mask tensor is passed). Both are set here."""
+        check_attention(attention, self.is_encoder_type, self.backbone_name)
+        causal = attention == "causal"
+        self.backbone.config.is_decoder = causal
+        for module in self.backbone.modules():
+            if module is self.backbone:
+                continue
+            if hasattr(module, "is_causal"):
+                module.is_causal = causal
+            if hasattr(module, "is_decoder"):
+                module.is_decoder = causal
+        self.attention = attention
 
     # ---------------------------------------------------------------- parameter groups
     def transformer_layers(self) -> list[nn.Module]:
@@ -100,7 +126,12 @@ class DualHeadModel(nn.Module):
 
     def describe(self) -> str:
         total, trainable = self.count_parameters()
-        how = "causal mask via is_decoder=True" if self.is_encoder_type else "causal by construction"
+        if not self.is_encoder_type:
+            how = "causal by construction"
+        elif self.attention == "causal":
+            how = "causal mask via is_decoder=True"
+        else:
+            how = "bidirectional attention, no causal mask"
         return (f"{self.backbone_name} ({type(self.backbone).__name__}, {how}), "
                 f"{len(self.transformer_layers())} layers, hidden {self.switch_head.in_features}, "
                 f"{total / 1e6:.1f}M parameters, {trainable / 1e6:.1f}M trainable")
@@ -109,11 +140,21 @@ class DualHeadModel(nn.Module):
 def save_model(model: DualHeadModel, path, extra: dict | None = None) -> None:
     """Checkpoint in fp16 to halve the file size; the heads and all weights are restored to fp32 by load_model."""
     state = {k: (v.half() if v.is_floating_point() else v) for k, v in model.state_dict().items()}
-    torch.save({"state_dict": state, "backbone": model.backbone_key, **(extra or {})}, path)
+    torch.save({"state_dict": state, "backbone": model.backbone_key, "attention": model.attention, **(extra or {})}, path)
 
 
-def load_model(path, backbone: str | None = None, tiny_vocab: int | None = None, map_location="cpu") -> DualHeadModel:
+def check_attention(attention: str, is_encoder_type: bool, name: str) -> None:
+    if attention not in ATTENTION_MODES:
+        raise ValueError(f"attention must be one of {ATTENTION_MODES}, got {attention!r}")
+    if attention == "bidirectional" and not is_encoder_type:
+        raise ValueError(f"{name} is a decoder; it has no bidirectional attention mode")
+
+
+def load_model(path, backbone: str | None = None, tiny_vocab: int | None = None, map_location="cpu",
+               attention: str | None = None) -> DualHeadModel:
+    """Restore a checkpoint with the attention it was trained with, or with `attention` if given."""
     ckpt = torch.load(path, map_location=map_location, weights_only=False)
-    model = DualHeadModel(backbone or ckpt["backbone"], tiny_vocab=tiny_vocab)
+    model = DualHeadModel(backbone or ckpt["backbone"], tiny_vocab=tiny_vocab,
+                          attention=attention or ckpt.get("attention", "causal"))
     model.load_state_dict({k: (v.float() if v.is_floating_point() else v) for k, v in ckpt["state_dict"].items()})
     return model

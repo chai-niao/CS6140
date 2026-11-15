@@ -3,6 +3,8 @@
     python train.py --model xlmr                       # Model A: XLM-R base + causal mask, all 15 pairs
     python train.py --model qwen --train_top_layers 8  # Model B: Qwen2.5-0.5B, only the top 8 layers trainable
     python train.py --model xlmr --lambda_duration 0.5 --max_train_convs 2000   # a lambda experiment on a subset
+    python train.py --model xlmr --attention bidirectional   # attention ablation: train without the causal mask
+                                                             # (then: evaluate.py --attention causal)
 
 Writes to --out_dir:
     config.json        all arguments, device, parameter counts
@@ -38,12 +40,15 @@ from batching import make_train_loader
 from dataset import get_tokenizer, make_loader
 from engine import AutocastForward, amp_dtype_for, autocast, evaluate_convs, get_device, to_device
 from losses import MultiTaskLoss
-from model import DualHeadModel, save_model
+from model import ATTENTION_MODES, DualHeadModel, save_model
 
 
 def parse_args(argv=None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", default="xlmr", help="xlmr | qwen | any Hugging Face model name")
+    ap.add_argument("--attention", default="causal", choices=list(ATTENTION_MODES),
+                    help="attention of an encoder backbone during training and the evaluations of this run; "
+                         "bidirectional lets position t see the rest of its window (ablation, not a streaming model)")
     ap.add_argument("--data_dir", default=str(DEFAULT_DATA_DIR))
     ap.add_argument("--pairs", nargs="*", default=None, help="default: every pair found in data_dir")
     ap.add_argument("--max_train_convs", type=int, default=0, help="training conversations per pair (0 = all)")
@@ -174,7 +179,8 @@ def main(argv=None) -> dict:
     sw_weight = switch_class_weight(train_convs, args.switch_weight)
     dur_weight = duration_class_weight(train_convs, args.duration_weight)
     loss_fn = MultiTaskLoss(args.lambda_switch, args.lambda_duration, sw_weight, dur_weight).to(device)
-    model = DualHeadModel(args.model, dropout=args.dropout, tiny_vocab=len(tok) if args.tiny else None)
+    model = DualHeadModel(args.model, dropout=args.dropout, tiny_vocab=len(tok) if args.tiny else None,
+                          attention=args.attention)
     if args.train_top_layers > 0:
         model.train_top_layers_only(args.train_top_layers)
     if args.gradient_checkpointing:
@@ -376,6 +382,7 @@ def main(argv=None) -> dict:
 
     summary = {
         "run_name": args.run_name or args.model, "model": args.model, "backbone": model.backbone_name, "out_dir": str(out_dir),
+        "attention": args.attention,
         "steps": step, "epochs": args.epochs, "train_minutes": round(train_minutes, 1), "best_step": best["step"],
         "nonfinite_steps": nonfinite, "fp16_overflow_skipped_steps": overflow_skipped,
         "final_loss_scale": scaler.get_scale() if scaler else None, "stopped_by_time_budget": stopped_by_budget, "peak_gpu_memory_gb": peak_gb, "max_len": args.max_len, "stride": args.stride,

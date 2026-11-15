@@ -2,6 +2,11 @@
 
     python evaluate.py --run_dir runs/xlmr_full                    # test metrics with the dev thresholds of the run
     python evaluate.py --run_dir runs/xlmr_full --streaming_check 2   # 2 random + the longest conversation per pair
+    python evaluate.py --run_dir runs/xlmr_bidir --attention causal   # a model trained without the mask, tested with it
+
+Attention ablation: with --attention different from the attention the run was trained with, the per-pair
+thresholds are tuned again on the dev split under the new attention and then applied to the test split, and
+the results are written to <split>_metrics_eval_<attention>.csv and eval_<attention>.json.
 
 Streaming check: the model is fed one conversation word by word (update1.dataset.iter_prefixes),
 exactly like a keyboard receiving words, and P(switch) after each word is compared with the
@@ -24,7 +29,7 @@ from common import markdown_table
 from data import available_pairs, load_convs, pair_of
 from dataset import PrefixWindowDataset, encode_conversation, get_tokenizer, iter_prefixes
 from engine import amp_dtype_for, evaluate_convs, get_device
-from model import load_model
+from model import ATTENTION_MODES, load_model
 
 
 def pick_streaming_convs(convs: list[dict], n_per_pair: int, seed: int = 0) -> list[dict]:
@@ -89,6 +94,8 @@ def main(argv=None) -> dict:
     ap.add_argument("--batch_size", type=int, default=64)
     ap.add_argument("--device", default="auto")
     ap.add_argument("--amp", default="auto", help="auto | bf16 | fp16 | 0")
+    ap.add_argument("--attention", default="as_trained", choices=["as_trained", *ATTENTION_MODES],
+                    help="attention at evaluation time (encoder backbones); as_trained keeps the one of the run")
     ap.add_argument("--streaming_check", type=int, default=0,
                     help="random conversations per pair for the streaming consistency check (the longest of each pair is added)")
     args = ap.parse_args(argv)
@@ -100,16 +107,27 @@ def main(argv=None) -> dict:
     amp_dtype = amp_dtype_for(device, args.amp)
     tok = get_tokenizer(config["model"])
     model = load_model(run_dir / "model.pt", config["model"], tiny_vocab=len(tok) if config.get("tiny") else None).to(device)
-    print(model.describe())
+    trained_attention = model.attention
+    switched = args.attention not in ("as_trained", trained_attention)
+    if switched:
+        model.set_attention(args.attention)
+    print(model.describe() + (f"  [trained with {trained_attention} attention]" if switched else ""))
 
     pairs = args.pairs or available_pairs(data_dir)
     convs = load_convs(data_dir, args.split, pairs, args.max_convs)
+    max_len, stride = config.get("max_len", 128), config.get("stride", 64)
     thresholds = None
-    if args.split == "test" and (run_dir / "summary.json").exists():
+    if args.split == "test" and switched:
+        # the thresholds of the run belong to the training attention: tune them again on dev under the new one
+        dev_convs = load_convs(data_dir, "dev", pairs, args.max_convs)
+        thresholds = evaluate_convs(model, dev_convs, tok, device, amp_dtype, batch_size=args.batch_size,
+                                    max_len=max_len, stride=stride)["thresholds"]
+    elif args.split == "test" and (run_dir / "summary.json").exists():
         thresholds = json.loads((run_dir / "summary.json").read_text(encoding="utf-8")).get("thresholds")
     res = evaluate_convs(model, convs, tok, device, amp_dtype, thresholds=thresholds, batch_size=args.batch_size,
-                         max_len=config.get("max_len", 128), stride=config.get("stride", 64))
-    out = run_dir / f"{args.split}_metrics_eval.csv"
+                         max_len=max_len, stride=stride)
+    suffix = f"_{args.attention}" if switched else ""
+    out = run_dir / f"{args.split}_metrics_eval{suffix}.csv"
     with open(out, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(res["rows"][0]))
         w.writeheader()
@@ -120,9 +138,13 @@ def main(argv=None) -> dict:
     print(f"wrote {out}")
 
     result = {"summary": res["summary"]}
+    if switched:
+        (run_dir / f"eval_{args.attention}.json").write_text(json.dumps(
+            {"trained_attention": trained_attention, "eval_attention": args.attention, "split": args.split,
+             "thresholds_tuned_on": "dev, under the evaluation attention" if args.split == "test" else "this split",
+             "summary": res["summary"], "thresholds": res["thresholds"]}, indent=2), encoding="utf-8")
     if args.streaming_check:
         model.float()
-        max_len, stride = config.get("max_len", 128), config.get("stride", 64)
         picked = pick_streaming_convs(convs, args.streaming_check)
         checks = streaming_consistency(model, picked, tok, device, max_len, stride)
         lines = [f"Streaming consistency ({config['model']}, fp32, {device}): {len(checks)} conversations, "
@@ -137,7 +159,7 @@ def main(argv=None) -> dict:
                      f"Worst difference {worst:.2e}: {'identical up to floating point noise' if worst < 1e-3 else 'MISMATCH'}")
         text = "\n".join(lines)
         print(text)
-        (run_dir / "streaming_check.md").write_text(text + "\n", encoding="utf-8")
+        (run_dir / f"streaming_check{suffix}.md").write_text(text + "\n", encoding="utf-8")
         result["streaming_max_abs_diff"] = worst
         result["streaming_conversations"] = len(checks)
     return result

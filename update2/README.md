@@ -93,3 +93,9 @@ kaggle kernels output <kaggle user>/cs6140-update2-xlmr-full -p runs_from_kaggle
 * **Convergence.** `train_log.csv` holds the switch and duration loss every 20 optimizer steps;
   `dev_log.csv` the dev loss, mean F1 at threshold 0.5, sigma and duration accuracy at every
   evaluation. `plots.py` turns them into `results/convergence_<run>.png`.
+* **Attention ablation (Update 1 feedback).** `train.py --attention bidirectional` trains the XLM-R
+  backbone without the causal mask; `evaluate.py --attention causal` tests a run with the mask, with the
+  per-pair thresholds tuned again on dev under the test-time attention (`DualHeadModel.set_attention` sets
+  both `config.is_decoder` and the `is_causal` flag of every attention layer). Trained without the mask,
+  XLM-R falls to F1 0.615 under the mask, below the naive baseline: the mask has to be part of training.
+  Results: [results/attention_ablation.md](results/attention_ablation.md); Explorer job: `explorer/`.

@@ -75,3 +75,50 @@ def test_checkpoint_roundtrip(tiny, tmp_path):
     sw2, dur2 = again(ids, mask)
     assert torch.allclose(sw1, sw2, atol=2e-2)  # fp16 checkpoint
     assert torch.allclose(dur1, dur2, atol=2e-2)
+
+
+# ---------------------------------------------------------------- attention ablation (train without the mask, test with it)
+def future_changes_prefix(model) -> bool:
+    """True if replacing tokens 6.. changes the switch logits at positions 0..5."""
+    ids, mask = batch(1)
+    sw1, _ = model(ids, mask)
+    ids2 = ids.clone()
+    ids2[0, 6:] = (ids[0, 6:] + 1 - 3) % (VOCAB - 3) + 3
+    sw2, _ = model(ids2, mask)
+    return not torch.allclose(sw1[0, :6], sw2[0, :6], atol=1e-5)
+
+
+def test_bidirectional_encoder_sees_the_future_and_set_attention_removes_it():
+    torch.manual_seed(0)
+    m = DualHeadModel("xlmr", tiny_vocab=VOCAB, attention="bidirectional").eval()
+    assert future_changes_prefix(m)
+    m.set_attention("causal")
+    assert not future_changes_prefix(m)
+    m.set_attention("bidirectional")
+    assert future_changes_prefix(m)
+
+
+def test_causal_and_switched_models_agree():
+    # a bidirectional model switched to causal must give exactly what a causal model with the same weights gives
+    torch.manual_seed(0)
+    bi = DualHeadModel("xlmr", tiny_vocab=VOCAB, attention="bidirectional").eval()
+    causal = DualHeadModel("xlmr", tiny_vocab=VOCAB, attention="causal").eval()
+    causal.load_state_dict(bi.state_dict())
+    bi.set_attention("causal")
+    ids, mask = batch()
+    assert torch.allclose(bi(ids, mask)[0], causal(ids, mask)[0], atol=1e-6)
+
+
+def test_decoder_has_no_bidirectional_mode():
+    with pytest.raises(ValueError):
+        DualHeadModel("qwen", tiny_vocab=VOCAB, attention="bidirectional")
+    with pytest.raises(ValueError):
+        DualHeadModel("qwen", tiny_vocab=VOCAB).set_attention("bidirectional")
+
+
+def test_checkpoint_keeps_the_training_attention(tmp_path):
+    torch.manual_seed(0)
+    m = DualHeadModel("xlmr", tiny_vocab=VOCAB, attention="bidirectional").eval()
+    save_model(m, tmp_path / "m.pt")
+    assert load_model(tmp_path / "m.pt", tiny_vocab=VOCAB).attention == "bidirectional"
+    assert not future_changes_prefix(load_model(tmp_path / "m.pt", tiny_vocab=VOCAB, attention="causal").eval())

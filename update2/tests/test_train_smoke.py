@@ -46,3 +46,24 @@ def test_train_evaluate_roundtrip(tmp_path, model):
     res = evaluate.main(["--run_dir", str(tmp_path), "--split", "test", "--max_convs", "5", "--device", "cpu",
                          "--streaming_check", "2"])
     assert res["streaming_max_abs_diff"] < 1e-3
+
+
+def test_bidirectional_run_evaluated_with_the_causal_mask(tmp_path):
+    import train
+    import evaluate
+
+    try:
+        summary = train.main([
+            "--tiny", "--model", "xlmr", "--attention", "bidirectional", "--pairs", "Spanish_eng", "Hindi_eng",
+            "--max_train_convs", "20", "--max_dev_convs", "10", "--max_test_convs", "10",
+            "--epochs", "1", "--max_steps", "4", "--batch_size", "4", "--eval_every", "2", "--log_every", "1",
+            "--device", "cpu", "--out_dir", str(tmp_path), "--run_name", "smoke_bidir",
+        ])
+    except OSError as e:
+        pytest.skip(f"tokenizer not available: {e}")
+    assert summary["attention"] == "bidirectional"
+    res = evaluate.main(["--run_dir", str(tmp_path), "--attention", "causal", "--max_convs", "10", "--device", "cpu"])
+    assert (tmp_path / "test_metrics_eval_causal.csv").exists()
+    saved = json.loads((tmp_path / "eval_causal.json").read_text())
+    assert saved["trained_attention"] == "bidirectional" and saved["eval_attention"] == "causal"
+    assert 0 <= res["summary"]["mean_F1"] <= 1
