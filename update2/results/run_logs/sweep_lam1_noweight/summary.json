@@ -1,0 +1,81 @@
+{
+  "run_name": "sweep_lam1_noweight",
+  "model": "xlmr",
+  "backbone": "xlm-roberta-base",
+  "out_dir": "/kaggle/working/runs/sweep_lam1_noweight",
+  "steps": 939,
+  "epochs": 1,
+  "train_minutes": 6.6,
+  "best_step": 900,
+  "nonfinite_batches": 0,
+  "stopped_by_time_budget": false,
+  "peak_gpu_memory_gb": [
+    5.23,
+    2.84
+  ],
+  "max_len": 256,
+  "stride": 128,
+  "lambda_switch": 1.0,
+  "lambda_duration": 1.0,
+  "switch_weight": "none",
+  "duration_weight": "none",
+  "train_top_layers": 0,
+  "max_train_convs": 2000,
+  "dev": {
+    "pairs": 15,
+    "mean_F1": 0.7322,
+    "sigma_F1": 0.0774,
+    "min_F1": 0.5797,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.8481,
+    "max_pair": "Korean_eng",
+    "mean_F1_at_0.5": 0.7173,
+    "mean_dur_acc": 0.6844,
+    "mean_F1_macro_by_type": 0.7328,
+    "mean_F1_inter": 0.7951,
+    "mean_F1_intra": 0.6047,
+    "mean_F1_tag": 0.7984
+  },
+  "dev_losses": {
+    "total": 0.9095714231652599,
+    "switch": 0.1926799815909196,
+    "duration": 0.716891445139403
+  },
+  "test": {
+    "pairs": 15,
+    "mean_F1": 0.7325,
+    "sigma_F1": 0.0741,
+    "min_F1": 0.581,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.8394,
+    "max_pair": "Korean_eng",
+    "mean_F1_at_0.5": 0.7169,
+    "mean_dur_acc": 0.6832,
+    "mean_F1_macro_by_type": 0.7347,
+    "mean_F1_inter": 0.7966,
+    "mean_F1_intra": 0.6012,
+    "mean_F1_tag": 0.8062
+  },
+  "test_losses": {
+    "total": 0.9128012585063134,
+    "switch": 0.19119408550441905,
+    "duration": 0.7216071746041698
+  },
+  "thresholds": {
+    "Arabic_eng": 0.45,
+    "Can_Eng": 0.35,
+    "Chinese_eng": 0.4,
+    "French_eng": 0.5,
+    "German_Eng": 0.45,
+    "German_French": 0.5,
+    "Hindi_eng": 0.35,
+    "Italian_eng": 0.55,
+    "Japanese_eng": 0.4,
+    "Korean_eng": 0.25,
+    "Malay_eng": 0.3,
+    "Philippines_eng": 0.3,
+    "Russian_eng": 0.5,
+    "Spanish_eng": 0.3,
+    "Vietnamese_eng": 0.3
+  }
+}

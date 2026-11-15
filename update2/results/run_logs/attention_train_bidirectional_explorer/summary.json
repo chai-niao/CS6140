@@ -1,0 +1,83 @@
+{
+  "run_name": "XLM-R trained bidirectional",
+  "model": "xlmr",
+  "backbone": "xlm-roberta-base",
+  "out_dir": "runs/xlmr_train_bidirectional",
+  "attention": "bidirectional",
+  "steps": 5943,
+  "epochs": 2,
+  "train_minutes": 10.3,
+  "best_step": 5943,
+  "nonfinite_steps": 0,
+  "fp16_overflow_skipped_steps": 5,
+  "final_loss_scale": 8192.0,
+  "stopped_by_time_budget": false,
+  "peak_gpu_memory_gb": [
+    6.49
+  ],
+  "max_len": 256,
+  "stride": 128,
+  "lambda_switch": 1.0,
+  "lambda_duration": 1.0,
+  "switch_weight": "balanced",
+  "duration_weight": "balanced",
+  "train_top_layers": 0,
+  "max_train_convs": 0,
+  "dev": {
+    "pairs": 15,
+    "mean_F1": 0.9731,
+    "sigma_F1": 0.0234,
+    "min_F1": 0.9292,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.9998,
+    "max_pair": "Chinese_eng",
+    "mean_F1_at_0.5": 0.9598,
+    "mean_dur_acc": 0.9884,
+    "mean_F1_macro_by_type": 0.9728,
+    "mean_F1_inter": 0.9688,
+    "mean_F1_intra": 0.9733,
+    "mean_F1_tag": 0.9765
+  },
+  "dev_losses": {
+    "total": 0.06944172476286567,
+    "switch": 0.030594456143291843,
+    "duration": 0.038847268593716795
+  },
+  "test": {
+    "pairs": 15,
+    "mean_F1": 0.9722,
+    "sigma_F1": 0.0235,
+    "min_F1": 0.9272,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.9995,
+    "max_pair": "Arabic_eng",
+    "mean_F1_at_0.5": 0.9605,
+    "mean_dur_acc": 0.9882,
+    "mean_F1_macro_by_type": 0.9717,
+    "mean_F1_inter": 0.9669,
+    "mean_F1_intra": 0.9722,
+    "mean_F1_tag": 0.9762
+  },
+  "test_losses": {
+    "total": 0.06344951761768185,
+    "switch": 0.027862738452841446,
+    "duration": 0.03558677945194734
+  },
+  "thresholds": {
+    "Arabic_eng": 0.85,
+    "Can_Eng": 0.55,
+    "Chinese_eng": 0.35,
+    "French_eng": 0.9,
+    "German_Eng": 0.85,
+    "German_French": 0.85,
+    "Hindi_eng": 0.9,
+    "Italian_eng": 0.9,
+    "Japanese_eng": 0.55,
+    "Korean_eng": 0.85,
+    "Malay_eng": 0.85,
+    "Philippines_eng": 0.9,
+    "Russian_eng": 0.95,
+    "Spanish_eng": 0.9,
+    "Vietnamese_eng": 0.9
+  }
+}

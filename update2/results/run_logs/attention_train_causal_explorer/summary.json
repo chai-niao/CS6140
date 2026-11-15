@@ -1,0 +1,83 @@
+{
+  "run_name": "XLM-R trained causal",
+  "model": "xlmr",
+  "backbone": "xlm-roberta-base",
+  "out_dir": "runs/xlmr_train_causal",
+  "attention": "causal",
+  "steps": 5942,
+  "epochs": 2,
+  "train_minutes": 9.5,
+  "best_step": 5942,
+  "nonfinite_steps": 0,
+  "fp16_overflow_skipped_steps": 6,
+  "final_loss_scale": 4096.0,
+  "stopped_by_time_budget": false,
+  "peak_gpu_memory_gb": [
+    6.49
+  ],
+  "max_len": 256,
+  "stride": 128,
+  "lambda_switch": 1.0,
+  "lambda_duration": 1.0,
+  "switch_weight": "balanced",
+  "duration_weight": "balanced",
+  "train_top_layers": 0,
+  "max_train_convs": 0,
+  "dev": {
+    "pairs": 15,
+    "mean_F1": 0.7848,
+    "sigma_F1": 0.0709,
+    "min_F1": 0.634,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.8932,
+    "max_pair": "Korean_eng",
+    "mean_F1_at_0.5": 0.7138,
+    "mean_dur_acc": 0.6979,
+    "mean_F1_macro_by_type": 0.7854,
+    "mean_F1_inter": 0.835,
+    "mean_F1_intra": 0.6832,
+    "mean_F1_tag": 0.8378
+  },
+  "dev_losses": {
+    "total": 0.9594098393635083,
+    "switch": 0.24752315041679207,
+    "duration": 0.7118866890668869
+  },
+  "test": {
+    "pairs": 15,
+    "mean_F1": 0.7843,
+    "sigma_F1": 0.069,
+    "min_F1": 0.6358,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.8867,
+    "max_pair": "Korean_eng",
+    "mean_F1_at_0.5": 0.7138,
+    "mean_dur_acc": 0.6953,
+    "mean_F1_macro_by_type": 0.7859,
+    "mean_F1_inter": 0.8343,
+    "mean_F1_intra": 0.6801,
+    "mean_F1_tag": 0.8433
+  },
+  "test_losses": {
+    "total": 0.962908923625946,
+    "switch": 0.24702905679261813,
+    "duration": 0.7158798676344656
+  },
+  "thresholds": {
+    "Arabic_eng": 0.85,
+    "Can_Eng": 0.8,
+    "Chinese_eng": 0.85,
+    "French_eng": 0.85,
+    "German_Eng": 0.85,
+    "German_French": 0.85,
+    "Hindi_eng": 0.8,
+    "Italian_eng": 0.85,
+    "Japanese_eng": 0.8,
+    "Korean_eng": 0.9,
+    "Malay_eng": 0.8,
+    "Philippines_eng": 0.75,
+    "Russian_eng": 0.85,
+    "Spanish_eng": 0.85,
+    "Vietnamese_eng": 0.85
+  }
+}

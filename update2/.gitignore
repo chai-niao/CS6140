@@ -1,0 +1,8 @@
+runs/
+runs_from_kaggle/
+_stage/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pt
+.DS_Store

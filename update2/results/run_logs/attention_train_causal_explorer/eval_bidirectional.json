@@ -1,0 +1,38 @@
+{
+  "trained_attention": "causal",
+  "eval_attention": "bidirectional",
+  "split": "test",
+  "thresholds_tuned_on": "dev, under the evaluation attention",
+  "summary": {
+    "pairs": 15,
+    "mean_F1": 0.8129,
+    "sigma_F1": 0.0589,
+    "min_F1": 0.6938,
+    "min_pair": "Philippines_eng",
+    "max_F1": 0.9053,
+    "max_pair": "Japanese_eng",
+    "mean_F1_at_0.5": 0.7503,
+    "mean_dur_acc": 0.6804,
+    "mean_F1_macro_by_type": 0.8144,
+    "mean_F1_inter": 0.843,
+    "mean_F1_intra": 0.7309,
+    "mean_F1_tag": 0.8694
+  },
+  "thresholds": {
+    "Arabic_eng": 0.75,
+    "Can_Eng": 0.75,
+    "Chinese_eng": 0.8,
+    "French_eng": 0.8,
+    "German_Eng": 0.8,
+    "German_French": 0.8,
+    "Hindi_eng": 0.8,
+    "Italian_eng": 0.8,
+    "Japanese_eng": 0.8,
+    "Korean_eng": 0.85,
+    "Malay_eng": 0.75,
+    "Philippines_eng": 0.8,
+    "Russian_eng": 0.8,
+    "Spanish_eng": 0.75,
+    "Vietnamese_eng": 0.7
+  }
+}

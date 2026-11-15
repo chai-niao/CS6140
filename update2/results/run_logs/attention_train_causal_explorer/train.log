@@ -1,0 +1,349 @@
+== train.py  2026-11-14 16:35:41  out_dir = runs/xlmr_train_causal
+device cuda, mixed precision torch.float16, torch 2.14.1+cu126
+15 pairs: Arabic_eng Hindi_eng Korean_eng Russian_eng Chinese_eng Can_Eng Japanese_eng Spanish_eng French_eng German_Eng Italian_eng Malay_eng Philippines_eng Vietnamese_eng German_French
+conversations: train 95,038, dev 11,871 (periodic eval on 1,500), test 11,874; dev and test exclude 7 and 8 conversations that duplicate an earlier split
+training positions 5,217,388, switches 686,584 (13.2%), duration bins [234079, 156222, 296283]
+95,142 training windows of <= 256 subwords, 2,974 batches per epoch (tokenized in 28s)
+xlm-roberta-base (XLMRobertaModel, causal mask via is_decoder=True), 12 layers, hidden 768, 277.5M parameters, 277.5M trainable
+L = 1 * CE_switch + 1 * CE_duration, ignore_index = -1, switch class weights [1.0, 6.599052906036377], duration class weights [0.9777098298072815, 1.4649749994277954, 0.7724416851997375]
+5,948 optimizer steps (2 epochs x 2,974), warmup 356, lr 2e-05, head lr 0.0001, batch 32 x accumulation 1
+fp16 gradient overflow at step 0; GradScaler skipped the update (loss scale now 32768), 1 so far
+fp16 gradient overflow at step 0; GradScaler skipped the update (loss scale now 16384), 2 so far
+fp16 gradient overflow at step 0; GradScaler skipped the update (loss scale now 8192), 3 so far
+fp16 gradient overflow at step 1; GradScaler skipped the update (loss scale now 4096), 4 so far
+step     20/5948  epoch 0.01  loss 1.9574  switch 0.6829  duration 1.2745  lr 1.12e-06  0.30s/step
+step     40/5948  epoch 0.01  loss 1.9413  switch 0.6580  duration 1.2832  lr 2.25e-06  0.09s/step
+fp16 gradient overflow at step 54; GradScaler skipped the update (loss scale now 2048), 5 so far
+step     60/5948  epoch 0.02  loss 1.8132  switch 0.6255  duration 1.1877  lr 3.37e-06  0.09s/step
+step     80/5948  epoch 0.03  loss 1.6897  switch 0.5705  duration 1.1191  lr 4.49e-06  0.09s/step
+step    100/5948  epoch 0.04  loss 1.5417  switch 0.5233  duration 1.0185  lr 5.62e-06  0.09s/step
+step    120/5948  epoch 0.04  loss 1.4923  switch 0.5086  duration 0.9838  lr 6.74e-06  0.09s/step
+step    140/5948  epoch 0.05  loss 1.4578  switch 0.4955  duration 0.9623  lr 7.87e-06  0.10s/step
+step    160/5948  epoch 0.06  loss 1.4293  switch 0.4766  duration 0.9527  lr 8.99e-06  0.09s/step
+step    180/5948  epoch 0.06  loss 1.3922  switch 0.4541  duration 0.9381  lr 1.01e-05  0.09s/step
+step    200/5948  epoch 0.07  loss 1.3931  switch 0.4701  duration 0.9229  lr 1.12e-05  0.08s/step
+step    220/5948  epoch 0.08  loss 1.3897  switch 0.4551  duration 0.9346  lr 1.24e-05  0.09s/step
+step    240/5948  epoch 0.08  loss 1.3470  switch 0.4259  duration 0.9211  lr 1.35e-05  0.09s/step
+step    260/5948  epoch 0.09  loss 1.3440  switch 0.4170  duration 0.9270  lr 1.46e-05  0.09s/step
+step    280/5948  epoch 0.10  loss 1.2848  switch 0.3974  duration 0.8873  lr 1.57e-05  0.09s/step
+step    300/5948  epoch 0.10  loss 1.2954  switch 0.4070  duration 0.8884  lr 1.69e-05  0.09s/step
+step    320/5948  epoch 0.11  loss 1.2154  switch 0.3931  duration 0.8222  lr 1.80e-05  0.08s/step
+step    340/5948  epoch 0.12  loss 1.2428  switch 0.3730  duration 0.8697  lr 1.91e-05  0.10s/step
+step    360/5948  epoch 0.12  loss 1.2236  switch 0.3653  duration 0.8583  lr 2.00e-05  0.08s/step
+step    380/5948  epoch 0.13  loss 1.2648  switch 0.3836  duration 0.8812  lr 1.99e-05  0.08s/step
+step    400/5948  epoch 0.14  loss 1.3131  switch 0.4024  duration 0.9107  lr 1.98e-05  0.09s/step
+step    420/5948  epoch 0.14  loss 1.2428  switch 0.3723  duration 0.8705  lr 1.98e-05  0.09s/step
+step    440/5948  epoch 0.15  loss 1.2432  switch 0.3658  duration 0.8774  lr 1.97e-05  0.09s/step
+step    460/5948  epoch 0.16  loss 1.2269  switch 0.3573  duration 0.8696  lr 1.96e-05  0.09s/step
+step    480/5948  epoch 0.16  loss 1.2282  switch 0.3685  duration 0.8597  lr 1.96e-05  0.10s/step
+step    500/5948  epoch 0.17  loss 1.2272  switch 0.3601  duration 0.8671  lr 1.95e-05  0.08s/step
+  dev @ step 500: loss 1.1749 (switch 0.3384, duration 0.8365), mean F1@0.5 0.6523, tuned 0.7221, sigma 0.0908, dur acc 0.6072
+step    520/5948  epoch 0.18  loss 1.1306  switch 0.3297  duration 0.8008  lr 1.94e-05  0.08s/step
+step    540/5948  epoch 0.18  loss 1.2429  switch 0.3699  duration 0.8729  lr 1.93e-05  0.08s/step
+step    560/5948  epoch 0.19  loss 1.2146  switch 0.3536  duration 0.8610  lr 1.93e-05  0.09s/step
+step    580/5948  epoch 0.20  loss 1.1944  switch 0.3433  duration 0.8511  lr 1.92e-05  0.09s/step
+step    600/5948  epoch 0.20  loss 1.1619  switch 0.3305  duration 0.8314  lr 1.91e-05  0.09s/step
+step    620/5948  epoch 0.21  loss 1.1538  switch 0.3410  duration 0.8128  lr 1.91e-05  0.09s/step
+step    640/5948  epoch 0.22  loss 1.1379  switch 0.3258  duration 0.8122  lr 1.90e-05  0.09s/step
+step    660/5948  epoch 0.22  loss 1.1379  switch 0.3374  duration 0.8006  lr 1.89e-05  0.08s/step
+step    680/5948  epoch 0.23  loss 1.1810  switch 0.3390  duration 0.8420  lr 1.88e-05  0.09s/step
+step    700/5948  epoch 0.24  loss 1.1538  switch 0.3327  duration 0.8211  lr 1.88e-05  0.09s/step
+step    720/5948  epoch 0.24  loss 1.1399  switch 0.3180  duration 0.8219  lr 1.87e-05  0.09s/step
+step    740/5948  epoch 0.25  loss 1.1851  switch 0.3437  duration 0.8414  lr 1.86e-05  0.09s/step
+step    760/5948  epoch 0.26  loss 1.1382  switch 0.3261  duration 0.8122  lr 1.86e-05  0.09s/step
+step    780/5948  epoch 0.26  loss 1.1788  switch 0.3388  duration 0.8401  lr 1.85e-05  0.09s/step
+step    800/5948  epoch 0.27  loss 1.1245  switch 0.3188  duration 0.8058  lr 1.84e-05  0.09s/step
+step    820/5948  epoch 0.28  loss 1.1404  switch 0.3235  duration 0.8168  lr 1.83e-05  0.09s/step
+step    840/5948  epoch 0.28  loss 1.1205  switch 0.3111  duration 0.8095  lr 1.83e-05  0.08s/step
+step    860/5948  epoch 0.29  loss 1.1417  switch 0.3312  duration 0.8106  lr 1.82e-05  0.09s/step
+step    880/5948  epoch 0.30  loss 1.1527  switch 0.3227  duration 0.8300  lr 1.81e-05  0.09s/step
+step    900/5948  epoch 0.30  loss 1.0819  switch 0.3028  duration 0.7791  lr 1.81e-05  0.09s/step
+step    920/5948  epoch 0.31  loss 1.1013  switch 0.3142  duration 0.7871  lr 1.80e-05  0.09s/step
+step    940/5948  epoch 0.32  loss 1.1199  switch 0.3229  duration 0.7970  lr 1.79e-05  0.09s/step
+step    960/5948  epoch 0.32  loss 1.1308  switch 0.3259  duration 0.8048  lr 1.78e-05  0.09s/step
+step    980/5948  epoch 0.33  loss 1.1274  switch 0.3167  duration 0.8108  lr 1.78e-05  0.09s/step
+step   1000/5948  epoch 0.34  loss 1.1502  switch 0.3219  duration 0.8283  lr 1.77e-05  0.09s/step
+  dev @ step 1000: loss 1.1208 (switch 0.3046, duration 0.8162), mean F1@0.5 0.6445, tuned 0.7468, sigma 0.0798, dur acc 0.5827
+step   1020/5948  epoch 0.34  loss 1.0900  switch 0.3012  duration 0.7888  lr 1.76e-05  0.09s/step
+step   1040/5948  epoch 0.35  loss 1.1426  switch 0.3129  duration 0.8297  lr 1.76e-05  0.08s/step
+step   1060/5948  epoch 0.36  loss 1.0901  switch 0.3068  duration 0.7833  lr 1.75e-05  0.09s/step
+step   1080/5948  epoch 0.37  loss 1.0937  switch 0.3119  duration 0.7819  lr 1.74e-05  0.09s/step
+step   1100/5948  epoch 0.37  loss 1.0959  switch 0.3077  duration 0.7882  lr 1.73e-05  0.09s/step
+step   1120/5948  epoch 0.38  loss 1.0768  switch 0.2974  duration 0.7794  lr 1.73e-05  0.09s/step
+step   1140/5948  epoch 0.39  loss 1.1256  switch 0.3103  duration 0.8153  lr 1.72e-05  0.08s/step
+step   1160/5948  epoch 0.39  loss 1.0889  switch 0.3021  duration 0.7869  lr 1.71e-05  0.09s/step
+step   1180/5948  epoch 0.40  loss 1.0796  switch 0.2960  duration 0.7836  lr 1.71e-05  0.10s/step
+step   1200/5948  epoch 0.41  loss 1.0847  switch 0.3034  duration 0.7812  lr 1.70e-05  0.08s/step
+step   1220/5948  epoch 0.41  loss 1.1109  switch 0.3137  duration 0.7972  lr 1.69e-05  0.09s/step
+step   1240/5948  epoch 0.42  loss 1.1077  switch 0.3012  duration 0.8064  lr 1.68e-05  0.10s/step
+step   1260/5948  epoch 0.43  loss 1.1188  switch 0.3103  duration 0.8086  lr 1.68e-05  0.09s/step
+step   1280/5948  epoch 0.43  loss 1.0530  switch 0.2876  duration 0.7654  lr 1.67e-05  0.08s/step
+step   1300/5948  epoch 0.44  loss 1.1286  switch 0.3128  duration 0.8158  lr 1.66e-05  0.09s/step
+step   1320/5948  epoch 0.45  loss 1.0642  switch 0.2943  duration 0.7699  lr 1.66e-05  0.08s/step
+step   1340/5948  epoch 0.45  loss 1.1177  switch 0.3162  duration 0.8015  lr 1.65e-05  0.09s/step
+step   1360/5948  epoch 0.46  loss 1.0706  switch 0.3030  duration 0.7676  lr 1.64e-05  0.08s/step
+step   1380/5948  epoch 0.47  loss 1.1304  switch 0.3101  duration 0.8203  lr 1.63e-05  0.09s/step
+step   1400/5948  epoch 0.47  loss 1.0845  switch 0.2963  duration 0.7882  lr 1.63e-05  0.08s/step
+step   1420/5948  epoch 0.48  loss 1.1446  switch 0.3150  duration 0.8296  lr 1.62e-05  0.08s/step
+step   1440/5948  epoch 0.49  loss 1.0741  switch 0.3036  duration 0.7706  lr 1.61e-05  0.09s/step
+step   1460/5948  epoch 0.49  loss 1.1175  switch 0.3058  duration 0.8117  lr 1.61e-05  0.09s/step
+step   1480/5948  epoch 0.50  loss 1.1384  switch 0.3032  duration 0.8353  lr 1.60e-05  0.08s/step
+step   1500/5948  epoch 0.51  loss 1.0694  switch 0.2878  duration 0.7816  lr 1.59e-05  0.09s/step
+  dev @ step 1500: loss 1.0390 (switch 0.2820, duration 0.7569), mean F1@0.5 0.6987, tuned 0.7604, sigma 0.0810, dur acc 0.6738
+step   1520/5948  epoch 0.51  loss 1.0966  switch 0.3001  duration 0.7964  lr 1.58e-05  0.08s/step
+step   1540/5948  epoch 0.52  loss 1.0482  switch 0.2943  duration 0.7539  lr 1.58e-05  0.08s/step
+step   1560/5948  epoch 0.53  loss 1.0960  switch 0.3006  duration 0.7955  lr 1.57e-05  0.09s/step
+step   1580/5948  epoch 0.53  loss 1.0947  switch 0.3042  duration 0.7905  lr 1.56e-05  0.09s/step
+step   1600/5948  epoch 0.54  loss 1.0706  switch 0.2983  duration 0.7722  lr 1.56e-05  0.08s/step
+step   1620/5948  epoch 0.55  loss 1.0712  switch 0.2915  duration 0.7797  lr 1.55e-05  0.09s/step
+step   1640/5948  epoch 0.55  loss 1.0418  switch 0.2910  duration 0.7508  lr 1.54e-05  0.09s/step
+step   1660/5948  epoch 0.56  loss 1.0591  switch 0.2864  duration 0.7728  lr 1.53e-05  0.09s/step
+step   1680/5948  epoch 0.57  loss 1.0611  switch 0.2872  duration 0.7739  lr 1.53e-05  0.09s/step
+step   1700/5948  epoch 0.57  loss 1.0660  switch 0.2944  duration 0.7715  lr 1.52e-05  0.09s/step
+step   1720/5948  epoch 0.58  loss 1.1078  switch 0.3166  duration 0.7912  lr 1.51e-05  0.08s/step
+step   1740/5948  epoch 0.59  loss 1.0774  switch 0.2928  duration 0.7847  lr 1.51e-05  0.10s/step
+step   1760/5948  epoch 0.59  loss 1.0742  switch 0.2982  duration 0.7760  lr 1.50e-05  0.08s/step
+step   1780/5948  epoch 0.60  loss 1.0643  switch 0.2869  duration 0.7774  lr 1.49e-05  0.09s/step
+step   1800/5948  epoch 0.61  loss 1.0129  switch 0.2758  duration 0.7371  lr 1.48e-05  0.08s/step
+step   1820/5948  epoch 0.61  loss 1.1079  switch 0.2944  duration 0.8135  lr 1.48e-05  0.10s/step
+step   1840/5948  epoch 0.62  loss 1.0741  switch 0.2856  duration 0.7885  lr 1.47e-05  0.09s/step
+step   1860/5948  epoch 0.63  loss 1.0692  switch 0.2845  duration 0.7848  lr 1.46e-05  0.09s/step
+step   1880/5948  epoch 0.63  loss 1.0686  switch 0.2862  duration 0.7824  lr 1.45e-05  0.08s/step
+step   1900/5948  epoch 0.64  loss 1.0446  switch 0.2689  duration 0.7758  lr 1.45e-05  0.09s/step
+step   1920/5948  epoch 0.65  loss 1.0589  switch 0.2813  duration 0.7776  lr 1.44e-05  0.08s/step
+step   1940/5948  epoch 0.65  loss 1.0289  switch 0.2760  duration 0.7529  lr 1.43e-05  0.09s/step
+step   1960/5948  epoch 0.66  loss 1.0565  switch 0.2907  duration 0.7658  lr 1.43e-05  0.10s/step
+step   1980/5948  epoch 0.67  loss 1.0507  switch 0.2800  duration 0.7706  lr 1.42e-05  0.09s/step
+step   2000/5948  epoch 0.67  loss 1.0551  switch 0.2972  duration 0.7579  lr 1.41e-05  0.09s/step
+  dev @ step 2000: loss 1.0165 (switch 0.2732, duration 0.7433), mean F1@0.5 0.7111, tuned 0.7686, sigma 0.0798, dur acc 0.6895
+step   2020/5948  epoch 0.68  loss 1.0205  switch 0.2750  duration 0.7455  lr 1.40e-05  0.09s/step
+step   2040/5948  epoch 0.69  loss 1.0173  switch 0.2721  duration 0.7452  lr 1.40e-05  0.08s/step
+step   2060/5948  epoch 0.69  loss 1.0523  switch 0.2929  duration 0.7594  lr 1.39e-05  0.10s/step
+step   2080/5948  epoch 0.70  loss 1.0786  switch 0.2885  duration 0.7901  lr 1.38e-05  0.09s/step
+step   2100/5948  epoch 0.71  loss 1.0374  switch 0.2925  duration 0.7449  lr 1.38e-05  0.09s/step
+step   2120/5948  epoch 0.71  loss 1.0477  switch 0.2893  duration 0.7584  lr 1.37e-05  0.09s/step
+step   2140/5948  epoch 0.72  loss 1.0417  switch 0.2820  duration 0.7596  lr 1.36e-05  0.09s/step
+step   2160/5948  epoch 0.73  loss 1.0414  switch 0.2820  duration 0.7594  lr 1.35e-05  0.09s/step
+step   2180/5948  epoch 0.74  loss 1.0732  switch 0.2896  duration 0.7836  lr 1.35e-05  0.10s/step
+step   2200/5948  epoch 0.74  loss 1.0459  switch 0.2838  duration 0.7621  lr 1.34e-05  0.10s/step
+step   2220/5948  epoch 0.75  loss 1.0051  switch 0.2680  duration 0.7371  lr 1.33e-05  0.09s/step
+step   2240/5948  epoch 0.76  loss 1.0230  switch 0.2733  duration 0.7497  lr 1.33e-05  0.09s/step
+step   2260/5948  epoch 0.76  loss 1.0161  switch 0.2731  duration 0.7430  lr 1.32e-05  0.09s/step
+step   2280/5948  epoch 0.77  loss 1.0522  switch 0.3008  duration 0.7514  lr 1.31e-05  0.09s/step
+step   2300/5948  epoch 0.78  loss 1.0337  switch 0.2727  duration 0.7610  lr 1.30e-05  0.09s/step
+step   2320/5948  epoch 0.78  loss 1.0907  switch 0.2992  duration 0.7916  lr 1.30e-05  0.08s/step
+step   2340/5948  epoch 0.79  loss 1.0119  switch 0.2685  duration 0.7435  lr 1.29e-05  0.09s/step
+step   2360/5948  epoch 0.80  loss 1.0673  switch 0.2858  duration 0.7814  lr 1.28e-05  0.08s/step
+step   2380/5948  epoch 0.80  loss 0.9983  switch 0.2665  duration 0.7318  lr 1.28e-05  0.09s/step
+step   2400/5948  epoch 0.81  loss 1.0380  switch 0.2883  duration 0.7497  lr 1.27e-05  0.09s/step
+step   2420/5948  epoch 0.82  loss 1.0390  switch 0.2870  duration 0.7520  lr 1.26e-05  0.09s/step
+step   2440/5948  epoch 0.82  loss 1.0462  switch 0.2849  duration 0.7613  lr 1.25e-05  0.08s/step
+step   2460/5948  epoch 0.83  loss 1.0129  switch 0.2619  duration 0.7510  lr 1.25e-05  0.09s/step
+step   2480/5948  epoch 0.84  loss 1.0312  switch 0.2807  duration 0.7505  lr 1.24e-05  0.08s/step
+step   2500/5948  epoch 0.84  loss 0.9617  switch 0.2531  duration 0.7086  lr 1.23e-05  0.09s/step
+  dev @ step 2500: loss 1.0090 (switch 0.2670, duration 0.7419), mean F1@0.5 0.7165, tuned 0.7747, sigma 0.0802, dur acc 0.6837
+step   2520/5948  epoch 0.85  loss 1.0724  switch 0.2946  duration 0.7778  lr 1.23e-05  0.08s/step
+step   2540/5948  epoch 0.86  loss 1.0238  switch 0.2787  duration 0.7450  lr 1.22e-05  0.10s/step
+step   2560/5948  epoch 0.86  loss 1.0172  switch 0.2741  duration 0.7432  lr 1.21e-05  0.08s/step
+step   2580/5948  epoch 0.87  loss 1.0451  switch 0.2797  duration 0.7654  lr 1.20e-05  0.09s/step
+step   2600/5948  epoch 0.88  loss 1.0573  switch 0.2701  duration 0.7872  lr 1.20e-05  0.09s/step
+step   2620/5948  epoch 0.88  loss 1.0445  switch 0.2740  duration 0.7705  lr 1.19e-05  0.09s/step
+step   2640/5948  epoch 0.89  loss 1.0408  switch 0.2742  duration 0.7666  lr 1.18e-05  0.09s/step
+step   2660/5948  epoch 0.90  loss 1.0360  switch 0.2771  duration 0.7589  lr 1.18e-05  0.09s/step
+step   2680/5948  epoch 0.90  loss 1.0406  switch 0.2787  duration 0.7618  lr 1.17e-05  0.09s/step
+step   2700/5948  epoch 0.91  loss 1.0049  switch 0.2579  duration 0.7470  lr 1.16e-05  0.09s/step
+step   2720/5948  epoch 0.92  loss 1.0100  switch 0.2724  duration 0.7376  lr 1.15e-05  0.09s/step
+step   2740/5948  epoch 0.92  loss 1.0132  switch 0.2757  duration 0.7374  lr 1.15e-05  0.08s/step
+step   2760/5948  epoch 0.93  loss 1.0297  switch 0.2781  duration 0.7517  lr 1.14e-05  0.08s/step
+step   2780/5948  epoch 0.94  loss 1.0490  switch 0.2730  duration 0.7759  lr 1.13e-05  0.09s/step
+step   2800/5948  epoch 0.94  loss 1.0175  switch 0.2724  duration 0.7450  lr 1.13e-05  0.08s/step
+step   2820/5948  epoch 0.95  loss 1.0247  switch 0.2784  duration 0.7464  lr 1.12e-05  0.09s/step
+step   2840/5948  epoch 0.96  loss 1.0086  switch 0.2530  duration 0.7556  lr 1.11e-05  0.08s/step
+step   2860/5948  epoch 0.96  loss 1.0067  switch 0.2660  duration 0.7407  lr 1.10e-05  0.09s/step
+step   2880/5948  epoch 0.97  loss 1.0520  switch 0.2871  duration 0.7649  lr 1.10e-05  0.09s/step
+step   2900/5948  epoch 0.98  loss 1.0172  switch 0.2740  duration 0.7432  lr 1.09e-05  0.09s/step
+step   2920/5948  epoch 0.98  loss 1.0565  switch 0.2795  duration 0.7770  lr 1.08e-05  0.09s/step
+step   2940/5948  epoch 0.99  loss 1.0587  switch 0.2828  duration 0.7760  lr 1.08e-05  0.09s/step
+step   2960/5948  epoch 1.00  loss 1.0681  switch 0.2774  duration 0.7907  lr 1.07e-05  0.08s/step
+  dev @ step 2968: loss 1.0038 (switch 0.2639, duration 0.7399), mean F1@0.5 0.7203, tuned 0.7769, sigma 0.0812, dur acc 0.6844
+step   2980/5948  epoch 1.00  loss 0.9880  switch 0.2660  duration 0.7220  lr 1.06e-05  0.06s/step
+step   3000/5948  epoch 1.01  loss 1.0296  switch 0.2744  duration 0.7551  lr 1.05e-05  0.09s/step
+  dev @ step 3000: loss 0.9936 (switch 0.2607, duration 0.7329), mean F1@0.5 0.6937, tuned 0.7787, sigma 0.0764, dur acc 0.6793
+step   3020/5948  epoch 1.02  loss 1.0064  switch 0.2749  duration 0.7315  lr 1.05e-05  0.09s/step
+step   3040/5948  epoch 1.02  loss 1.0421  switch 0.2799  duration 0.7621  lr 1.04e-05  0.09s/step
+step   3060/5948  epoch 1.03  loss 1.0124  switch 0.2670  duration 0.7455  lr 1.03e-05  0.09s/step
+step   3080/5948  epoch 1.04  loss 0.9729  switch 0.2554  duration 0.7175  lr 1.03e-05  0.09s/step
+step   3100/5948  epoch 1.04  loss 1.0218  switch 0.2660  duration 0.7558  lr 1.02e-05  0.09s/step
+step   3120/5948  epoch 1.05  loss 1.0110  switch 0.2766  duration 0.7345  lr 1.01e-05  0.08s/step
+step   3140/5948  epoch 1.06  loss 1.0293  switch 0.2735  duration 0.7558  lr 1.00e-05  0.09s/step
+step   3160/5948  epoch 1.06  loss 1.0479  switch 0.2714  duration 0.7766  lr 9.97e-06  0.09s/step
+step   3180/5948  epoch 1.07  loss 1.0382  switch 0.2735  duration 0.7647  lr 9.90e-06  0.09s/step
+step   3200/5948  epoch 1.08  loss 0.9925  switch 0.2615  duration 0.7309  lr 9.83e-06  0.09s/step
+step   3220/5948  epoch 1.08  loss 0.9765  switch 0.2614  duration 0.7151  lr 9.76e-06  0.09s/step
+step   3240/5948  epoch 1.09  loss 1.0120  switch 0.2698  duration 0.7422  lr 9.69e-06  0.09s/step
+step   3260/5948  epoch 1.10  loss 1.0215  switch 0.2750  duration 0.7464  lr 9.61e-06  0.09s/step
+step   3280/5948  epoch 1.10  loss 1.0086  switch 0.2639  duration 0.7448  lr 9.54e-06  0.09s/step
+step   3300/5948  epoch 1.11  loss 1.0043  switch 0.2636  duration 0.7407  lr 9.47e-06  0.10s/step
+step   3320/5948  epoch 1.12  loss 1.0448  switch 0.2753  duration 0.7695  lr 9.40e-06  0.08s/step
+step   3340/5948  epoch 1.13  loss 0.9771  switch 0.2469  duration 0.7302  lr 9.33e-06  0.08s/step
+step   3360/5948  epoch 1.13  loss 1.0061  switch 0.2591  duration 0.7470  lr 9.26e-06  0.09s/step
+step   3380/5948  epoch 1.14  loss 1.0061  switch 0.2643  duration 0.7418  lr 9.18e-06  0.09s/step
+step   3400/5948  epoch 1.15  loss 0.9955  switch 0.2505  duration 0.7450  lr 9.11e-06  0.08s/step
+step   3420/5948  epoch 1.15  loss 0.9910  switch 0.2643  duration 0.7267  lr 9.04e-06  0.08s/step
+step   3440/5948  epoch 1.16  loss 1.0013  switch 0.2709  duration 0.7304  lr 8.97e-06  0.09s/step
+step   3460/5948  epoch 1.17  loss 1.0364  switch 0.2769  duration 0.7595  lr 8.90e-06  0.09s/step
+step   3480/5948  epoch 1.17  loss 1.0254  switch 0.2821  duration 0.7432  lr 8.83e-06  0.08s/step
+step   3500/5948  epoch 1.18  loss 0.9797  switch 0.2604  duration 0.7194  lr 8.76e-06  0.08s/step
+  dev @ step 3500: loss 1.0006 (switch 0.2588, duration 0.7418), mean F1@0.5 0.7045, tuned 0.7792, sigma 0.0748, dur acc 0.6657
+step   3520/5948  epoch 1.19  loss 0.9332  switch 0.2382  duration 0.6950  lr 8.68e-06  0.09s/step
+step   3540/5948  epoch 1.19  loss 0.9807  switch 0.2642  duration 0.7164  lr 8.61e-06  0.09s/step
+step   3560/5948  epoch 1.20  loss 1.0218  switch 0.2706  duration 0.7512  lr 8.54e-06  0.08s/step
+step   3580/5948  epoch 1.21  loss 1.0285  switch 0.2761  duration 0.7524  lr 8.47e-06  0.09s/step
+step   3600/5948  epoch 1.21  loss 1.0172  switch 0.2721  duration 0.7451  lr 8.40e-06  0.09s/step
+step   3620/5948  epoch 1.22  loss 1.0251  switch 0.2683  duration 0.7568  lr 8.33e-06  0.08s/step
+step   3640/5948  epoch 1.23  loss 1.0166  switch 0.2718  duration 0.7447  lr 8.25e-06  0.09s/step
+step   3660/5948  epoch 1.23  loss 0.9766  switch 0.2578  duration 0.7188  lr 8.18e-06  0.08s/step
+step   3680/5948  epoch 1.24  loss 1.0003  switch 0.2643  duration 0.7360  lr 8.11e-06  0.08s/step
+step   3700/5948  epoch 1.25  loss 0.9979  switch 0.2664  duration 0.7314  lr 8.04e-06  0.09s/step
+step   3720/5948  epoch 1.25  loss 0.9935  switch 0.2564  duration 0.7371  lr 7.97e-06  0.09s/step
+step   3740/5948  epoch 1.26  loss 1.0312  switch 0.2638  duration 0.7674  lr 7.90e-06  0.09s/step
+step   3760/5948  epoch 1.27  loss 1.0291  switch 0.2753  duration 0.7538  lr 7.83e-06  0.09s/step
+step   3780/5948  epoch 1.27  loss 0.9443  switch 0.2424  duration 0.7019  lr 7.75e-06  0.09s/step
+step   3800/5948  epoch 1.28  loss 1.0433  switch 0.2665  duration 0.7769  lr 7.68e-06  0.08s/step
+step   3820/5948  epoch 1.29  loss 0.9822  switch 0.2505  duration 0.7317  lr 7.61e-06  0.08s/step
+step   3840/5948  epoch 1.29  loss 1.0089  switch 0.2669  duration 0.7420  lr 7.54e-06  0.09s/step
+step   3860/5948  epoch 1.30  loss 0.9736  switch 0.2577  duration 0.7159  lr 7.47e-06  0.08s/step
+step   3880/5948  epoch 1.31  loss 1.0138  switch 0.2730  duration 0.7408  lr 7.40e-06  0.09s/step
+step   3900/5948  epoch 1.31  loss 1.0326  switch 0.2714  duration 0.7612  lr 7.32e-06  0.08s/step
+step   3920/5948  epoch 1.32  loss 0.9979  switch 0.2603  duration 0.7376  lr 7.25e-06  0.09s/step
+step   3940/5948  epoch 1.33  loss 0.9957  switch 0.2786  duration 0.7171  lr 7.18e-06  0.08s/step
+step   3960/5948  epoch 1.33  loss 1.0072  switch 0.2678  duration 0.7393  lr 7.11e-06  0.08s/step
+step   3980/5948  epoch 1.34  loss 1.0390  switch 0.2735  duration 0.7655  lr 7.04e-06  0.10s/step
+step   4000/5948  epoch 1.35  loss 1.0024  switch 0.2602  duration 0.7423  lr 6.97e-06  0.09s/step
+  dev @ step 4000: loss 0.9866 (switch 0.2555, duration 0.7311), mean F1@0.5 0.6975, tuned 0.7821, sigma 0.0784, dur acc 0.6771
+step   4020/5948  epoch 1.35  loss 0.9926  switch 0.2602  duration 0.7324  lr 6.90e-06  0.09s/step
+step   4040/5948  epoch 1.36  loss 0.9848  switch 0.2660  duration 0.7188  lr 6.82e-06  0.08s/step
+step   4060/5948  epoch 1.37  loss 1.0034  switch 0.2662  duration 0.7372  lr 6.75e-06  0.09s/step
+step   4080/5948  epoch 1.37  loss 1.0118  switch 0.2713  duration 0.7405  lr 6.68e-06  0.08s/step
+step   4100/5948  epoch 1.38  loss 0.9875  switch 0.2621  duration 0.7255  lr 6.61e-06  0.09s/step
+step   4120/5948  epoch 1.39  loss 1.0156  switch 0.2626  duration 0.7530  lr 6.54e-06  0.09s/step
+step   4140/5948  epoch 1.39  loss 1.0007  switch 0.2660  duration 0.7346  lr 6.47e-06  0.08s/step
+step   4160/5948  epoch 1.40  loss 1.0057  switch 0.2646  duration 0.7411  lr 6.39e-06  0.09s/step
+step   4180/5948  epoch 1.41  loss 0.9658  switch 0.2616  duration 0.7042  lr 6.32e-06  0.09s/step
+step   4200/5948  epoch 1.41  loss 0.9862  switch 0.2638  duration 0.7224  lr 6.25e-06  0.08s/step
+step   4220/5948  epoch 1.42  loss 1.0392  switch 0.2730  duration 0.7662  lr 6.18e-06  0.10s/step
+step   4240/5948  epoch 1.43  loss 0.9981  switch 0.2613  duration 0.7368  lr 6.11e-06  0.09s/step
+step   4260/5948  epoch 1.43  loss 1.0058  switch 0.2644  duration 0.7414  lr 6.04e-06  0.09s/step
+step   4280/5948  epoch 1.44  loss 1.0214  switch 0.2750  duration 0.7464  lr 5.97e-06  0.08s/step
+step   4300/5948  epoch 1.45  loss 0.9983  switch 0.2653  duration 0.7329  lr 5.89e-06  0.09s/step
+step   4320/5948  epoch 1.45  loss 1.0403  switch 0.2692  duration 0.7710  lr 5.82e-06  0.09s/step
+step   4340/5948  epoch 1.46  loss 0.9996  switch 0.2698  duration 0.7297  lr 5.75e-06  0.08s/step
+step   4360/5948  epoch 1.47  loss 1.0163  switch 0.2632  duration 0.7531  lr 5.68e-06  0.10s/step
+step   4380/5948  epoch 1.47  loss 1.0083  switch 0.2643  duration 0.7441  lr 5.61e-06  0.09s/step
+step   4400/5948  epoch 1.48  loss 0.9649  switch 0.2526  duration 0.7123  lr 5.54e-06  0.09s/step
+step   4420/5948  epoch 1.49  loss 1.0159  switch 0.2571  duration 0.7588  lr 5.46e-06  0.09s/step
+step   4440/5948  epoch 1.49  loss 1.0209  switch 0.2678  duration 0.7531  lr 5.39e-06  0.09s/step
+step   4460/5948  epoch 1.50  loss 0.9950  switch 0.2620  duration 0.7330  lr 5.32e-06  0.09s/step
+step   4480/5948  epoch 1.51  loss 1.0484  switch 0.2734  duration 0.7751  lr 5.25e-06  0.09s/step
+step   4500/5948  epoch 1.52  loss 0.9799  switch 0.2613  duration 0.7186  lr 5.18e-06  0.09s/step
+  dev @ step 4500: loss 0.9808 (switch 0.2529, duration 0.7279), mean F1@0.5 0.7261, tuned 0.7859, sigma 0.0753, dur acc 0.6895
+step   4520/5948  epoch 1.52  loss 1.0040  switch 0.2590  duration 0.7450  lr 5.11e-06  0.08s/step
+step   4540/5948  epoch 1.53  loss 1.0144  switch 0.2667  duration 0.7477  lr 5.04e-06  0.09s/step
+step   4560/5948  epoch 1.54  loss 0.9873  switch 0.2590  duration 0.7283  lr 4.96e-06  0.09s/step
+step   4580/5948  epoch 1.54  loss 0.9970  switch 0.2637  duration 0.7333  lr 4.89e-06  0.09s/step
+step   4600/5948  epoch 1.55  loss 0.9319  switch 0.2396  duration 0.6923  lr 4.82e-06  0.09s/step
+step   4620/5948  epoch 1.56  loss 1.0259  switch 0.2710  duration 0.7549  lr 4.75e-06  0.09s/step
+step   4640/5948  epoch 1.56  loss 0.9557  switch 0.2537  duration 0.7020  lr 4.68e-06  0.09s/step
+step   4660/5948  epoch 1.57  loss 0.9849  switch 0.2573  duration 0.7276  lr 4.61e-06  0.09s/step
+step   4680/5948  epoch 1.58  loss 1.0080  switch 0.2725  duration 0.7355  lr 4.54e-06  0.09s/step
+step   4700/5948  epoch 1.58  loss 1.0616  switch 0.2828  duration 0.7788  lr 4.46e-06  0.09s/step
+step   4720/5948  epoch 1.59  loss 0.9854  switch 0.2558  duration 0.7296  lr 4.39e-06  0.08s/step
+step   4740/5948  epoch 1.60  loss 0.9890  switch 0.2562  duration 0.7328  lr 4.32e-06  0.08s/step
+step   4760/5948  epoch 1.60  loss 0.9221  switch 0.2340  duration 0.6881  lr 4.25e-06  0.08s/step
+step   4780/5948  epoch 1.61  loss 1.0027  switch 0.2745  duration 0.7282  lr 4.18e-06  0.08s/step
+step   4800/5948  epoch 1.62  loss 0.9833  switch 0.2682  duration 0.7151  lr 4.11e-06  0.09s/step
+step   4820/5948  epoch 1.62  loss 0.9347  switch 0.2427  duration 0.6919  lr 4.03e-06  0.08s/step
+step   4840/5948  epoch 1.63  loss 0.9668  switch 0.2543  duration 0.7125  lr 3.96e-06  0.09s/step
+step   4860/5948  epoch 1.64  loss 0.9411  switch 0.2485  duration 0.6926  lr 3.89e-06  0.09s/step
+step   4880/5948  epoch 1.64  loss 1.0108  switch 0.2609  duration 0.7499  lr 3.82e-06  0.08s/step
+step   4900/5948  epoch 1.65  loss 0.9646  switch 0.2603  duration 0.7043  lr 3.75e-06  0.09s/step
+step   4920/5948  epoch 1.66  loss 1.0114  switch 0.2745  duration 0.7369  lr 3.68e-06  0.09s/step
+step   4940/5948  epoch 1.66  loss 1.0209  switch 0.2748  duration 0.7461  lr 3.61e-06  0.08s/step
+step   4960/5948  epoch 1.67  loss 0.9837  switch 0.2445  duration 0.7392  lr 3.53e-06  0.09s/step
+step   4980/5948  epoch 1.68  loss 0.9798  switch 0.2529  duration 0.7270  lr 3.46e-06  0.09s/step
+step   5000/5948  epoch 1.68  loss 0.9565  switch 0.2396  duration 0.7169  lr 3.39e-06  0.09s/step
+  dev @ step 5000: loss 0.9767 (switch 0.2521, duration 0.7246), mean F1@0.5 0.7250, tuned 0.7858, sigma 0.0747, dur acc 0.7019
+step   5020/5948  epoch 1.69  loss 0.9740  switch 0.2552  duration 0.7188  lr 3.32e-06  0.08s/step
+step   5040/5948  epoch 1.70  loss 1.0739  switch 0.2869  duration 0.7870  lr 3.25e-06  0.08s/step
+step   5060/5948  epoch 1.70  loss 0.9797  switch 0.2530  duration 0.7266  lr 3.18e-06  0.09s/step
+step   5080/5948  epoch 1.71  loss 1.0023  switch 0.2682  duration 0.7341  lr 3.10e-06  0.09s/step
+step   5100/5948  epoch 1.72  loss 0.9813  switch 0.2549  duration 0.7264  lr 3.03e-06  0.09s/step
+step   5120/5948  epoch 1.72  loss 0.9844  switch 0.2614  duration 0.7230  lr 2.96e-06  0.09s/step
+step   5140/5948  epoch 1.73  loss 1.0263  switch 0.2665  duration 0.7599  lr 2.89e-06  0.09s/step
+step   5160/5948  epoch 1.74  loss 0.9920  switch 0.2557  duration 0.7364  lr 2.82e-06  0.10s/step
+step   5180/5948  epoch 1.74  loss 0.9945  switch 0.2471  duration 0.7474  lr 2.75e-06  0.09s/step
+step   5200/5948  epoch 1.75  loss 1.0122  switch 0.2679  duration 0.7442  lr 2.68e-06  0.09s/step
+step   5220/5948  epoch 1.76  loss 0.9749  switch 0.2631  duration 0.7118  lr 2.60e-06  0.08s/step
+step   5240/5948  epoch 1.76  loss 1.0024  switch 0.2538  duration 0.7487  lr 2.53e-06  0.09s/step
+step   5260/5948  epoch 1.77  loss 0.9858  switch 0.2533  duration 0.7325  lr 2.46e-06  0.09s/step
+step   5280/5948  epoch 1.78  loss 1.0030  switch 0.2655  duration 0.7375  lr 2.39e-06  0.09s/step
+step   5300/5948  epoch 1.78  loss 0.9838  switch 0.2620  duration 0.7218  lr 2.32e-06  0.09s/step
+step   5320/5948  epoch 1.79  loss 0.9893  switch 0.2545  duration 0.7347  lr 2.25e-06  0.09s/step
+step   5340/5948  epoch 1.80  loss 0.9609  switch 0.2471  duration 0.7138  lr 2.17e-06  0.09s/step
+step   5360/5948  epoch 1.80  loss 0.9955  switch 0.2531  duration 0.7424  lr 2.10e-06  0.10s/step
+step   5380/5948  epoch 1.81  loss 0.9749  switch 0.2476  duration 0.7273  lr 2.03e-06  0.09s/step
+step   5400/5948  epoch 1.82  loss 1.0212  switch 0.2718  duration 0.7494  lr 1.96e-06  0.08s/step
+step   5420/5948  epoch 1.82  loss 0.9889  switch 0.2546  duration 0.7343  lr 1.89e-06  0.09s/step
+step   5440/5948  epoch 1.83  loss 1.0324  switch 0.2704  duration 0.7621  lr 1.82e-06  0.09s/step
+step   5460/5948  epoch 1.84  loss 1.0162  switch 0.2649  duration 0.7513  lr 1.75e-06  0.09s/step
+step   5480/5948  epoch 1.84  loss 0.9718  switch 0.2546  duration 0.7171  lr 1.67e-06  0.09s/step
+step   5500/5948  epoch 1.85  loss 1.0119  switch 0.2658  duration 0.7460  lr 1.60e-06  0.08s/step
+  dev @ step 5500: loss 0.9730 (switch 0.2508, duration 0.7222), mean F1@0.5 0.7182, tuned 0.7868, sigma 0.0757, dur acc 0.6931
+step   5520/5948  epoch 1.86  loss 0.9855  switch 0.2682  duration 0.7173  lr 1.53e-06  0.09s/step
+step   5540/5948  epoch 1.86  loss 1.0351  switch 0.2802  duration 0.7549  lr 1.46e-06  0.09s/step
+step   5560/5948  epoch 1.87  loss 1.0427  switch 0.2722  duration 0.7704  lr 1.39e-06  0.09s/step
+step   5580/5948  epoch 1.88  loss 0.9693  switch 0.2627  duration 0.7066  lr 1.32e-06  0.08s/step
+step   5600/5948  epoch 1.89  loss 0.9740  switch 0.2666  duration 0.7073  lr 1.24e-06  0.08s/step
+step   5620/5948  epoch 1.89  loss 0.9980  switch 0.2622  duration 0.7358  lr 1.17e-06  0.09s/step
+step   5640/5948  epoch 1.90  loss 1.0197  switch 0.2745  duration 0.7452  lr 1.10e-06  0.08s/step
+step   5660/5948  epoch 1.91  loss 1.0123  switch 0.2675  duration 0.7448  lr 1.03e-06  0.09s/step
+step   5680/5948  epoch 1.91  loss 1.0059  switch 0.2651  duration 0.7409  lr 9.59e-07  0.10s/step
+step   5700/5948  epoch 1.92  loss 0.9571  switch 0.2453  duration 0.7118  lr 8.87e-07  0.08s/step
+step   5720/5948  epoch 1.93  loss 0.9531  switch 0.2466  duration 0.7065  lr 8.15e-07  0.08s/step
+step   5740/5948  epoch 1.93  loss 1.0057  switch 0.2647  duration 0.7410  lr 7.44e-07  0.08s/step
+step   5760/5948  epoch 1.94  loss 0.9828  switch 0.2575  duration 0.7252  lr 6.72e-07  0.09s/step
+step   5780/5948  epoch 1.95  loss 1.0031  switch 0.2672  duration 0.7359  lr 6.01e-07  0.09s/step
+step   5800/5948  epoch 1.95  loss 0.9791  switch 0.2482  duration 0.7309  lr 5.29e-07  0.09s/step
+step   5820/5948  epoch 1.96  loss 0.9745  switch 0.2552  duration 0.7193  lr 4.58e-07  0.09s/step
+step   5840/5948  epoch 1.97  loss 0.9464  switch 0.2454  duration 0.7010  lr 3.86e-07  0.09s/step
+step   5860/5948  epoch 1.97  loss 0.9837  switch 0.2549  duration 0.7287  lr 3.15e-07  0.09s/step
+step   5880/5948  epoch 1.98  loss 1.0488  switch 0.2845  duration 0.7643  lr 2.43e-07  0.09s/step
+step   5900/5948  epoch 1.99  loss 1.0162  switch 0.2644  duration 0.7518  lr 1.72e-07  0.09s/step
+step   5920/5948  epoch 1.99  loss 0.9618  switch 0.2469  duration 0.7149  lr 1.00e-07  0.09s/step
+step   5940/5948  epoch 2.00  loss 0.9681  switch 0.2543  duration 0.7138  lr 2.86e-08  0.08s/step
+  dev @ step 5942: loss 0.9728 (switch 0.2504, duration 0.7224), mean F1@0.5 0.7182, tuned 0.7870, sigma 0.0750, dur acc 0.6949
+training finished: 5942 steps in 9.5 min (0.10 s/step), 0 steps dropped for a non-finite loss, 6 fp16 steps skipped by GradScaler (final loss scale 4096), peak GPU memory [6.49] GB
+
+# XLM-R trained causal: test split
+
+| pair | switch_rate_% | threshold | P | R | F1 | F1_at_0.5 | dur_acc | F1_macro_by_type |
+|---|---|---|---|---|---|---|---|---|
+| Arabic_eng | 12.94 | 0.85 | 0.8744 | 0.7823 | 0.8258 | 0.7368 | 0.6893 | 0.8318 |
+| Can_Eng | 12.64 | 0.8 | 0.7267 | 0.647 | 0.6845 | 0.5872 | 0.6464 | 0.6853 |
+| Chinese_eng | 10.62 | 0.85 | 0.8624 | 0.8042 | 0.8323 | 0.7529 | 0.75 | 0.8392 |
+| French_eng | 11.04 | 0.85 | 0.8939 | 0.7967 | 0.8425 | 0.796 | 0.7443 | 0.8323 |
+| German_Eng | 11.68 | 0.85 | 0.8364 | 0.7704 | 0.8021 | 0.7527 | 0.7149 | 0.8037 |
+| German_French | 10.89 | 0.85 | 0.8428 | 0.7329 | 0.784 | 0.7228 | 0.6615 | 0.7829 |
+| Hindi_eng | 23.72 | 0.8 | 0.6429 | 0.7972 | 0.7118 | 0.6634 | 0.6219 | 0.717 |
+| Italian_eng | 10.77 | 0.85 | 0.8459 | 0.7898 | 0.8169 | 0.7526 | 0.7389 | 0.8133 |
+| Japanese_eng | 8.56 | 0.8 | 0.8867 | 0.8632 | 0.8748 | 0.8047 | 0.8347 | 0.8772 |
+| Korean_eng | 14.02 | 0.9 | 0.9186 | 0.8569 | 0.8867 | 0.8131 | 0.6807 | 0.891 |
+| Malay_eng | 15.59 | 0.8 | 0.7144 | 0.6951 | 0.7046 | 0.6108 | 0.6282 | 0.7143 |
+| Philippines_eng | 20.33 | 0.75 | 0.5485 | 0.756 | 0.6358 | 0.5888 | 0.5993 | 0.6375 |
+| Russian_eng | 12.76 | 0.85 | 0.8541 | 0.7485 | 0.7978 | 0.7134 | 0.6796 | 0.791 |
+| Spanish_eng | 12.05 | 0.85 | 0.8424 | 0.7476 | 0.7922 | 0.721 | 0.7036 | 0.7928 |
+| Vietnamese_eng | 11.18 | 0.85 | 0.8224 | 0.7288 | 0.7728 | 0.6904 | 0.7367 | 0.7793 |
+
+Mean Anticipatory F1 = 0.7843, sigma = 0.0690 (min 0.636 Philippines_eng, max 0.887 Korean_eng); mean F1 at threshold 0.5 = 0.7138; duration accuracy at true switches = 0.6953; macro F1 by switch type = 0.7859.
+
+wrote runs/xlmr_train_causal/summary.json

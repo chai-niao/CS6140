@@ -1,0 +1,89 @@
+== train.py  2026-11-11 06:30:52  out_dir = /kaggle/working/runs/sweep_lam1_noweight
+device cuda, mixed precision torch.float16, torch 2.11.0+cu130
+15 pairs: Arabic_eng Hindi_eng Korean_eng Russian_eng Chinese_eng Can_Eng Japanese_eng Spanish_eng French_eng German_Eng Italian_eng Malay_eng Philippines_eng Vietnamese_eng German_French
+conversations: train 30,000, dev 11,871 (periodic eval on 1,500), test 11,874; dev and test exclude 7 and 8 conversations that duplicate an earlier split
+training positions 1,637,012, switches 214,807 (13.1%), duration bins [73279, 48419, 93109]
+30,031 training windows of <= 256 subwords, 939 batches per epoch (tokenized in 12s)
+xlm-roberta-base (XLMRobertaModel, causal mask via is_decoder=True), 12 layers, hidden 768, 277.5M parameters, 277.5M trainable
+L = 1 * CE_switch + 1 * CE_duration, ignore_index = -1, switch class weights none, duration class weights none
+DataParallel over 2 GPUs
+939 optimizer steps (1 epochs x 939), warmup 56, lr 2e-05, head lr 0.0001, batch 32 x accumulation 1
+step     20/939  epoch 0.02  loss 2.0092  switch 0.7159  duration 1.2934  lr 7.14e-06  0.42s/step
+step     40/939  epoch 0.04  loss 1.4543  switch 0.3901  duration 1.0642  lr 1.43e-05  0.38s/step
+step     60/939  epoch 0.06  loss 1.2640  switch 0.2832  duration 0.9808  lr 1.99e-05  0.37s/step
+step     80/939  epoch 0.09  loss 1.2191  switch 0.2881  duration 0.9310  lr 1.95e-05  0.38s/step
+step    100/939  epoch 0.11  loss 1.2097  switch 0.2839  duration 0.9258  lr 1.90e-05  0.38s/step
+step    120/939  epoch 0.13  loss 1.1486  switch 0.2794  duration 0.8692  lr 1.86e-05  0.38s/step
+step    140/939  epoch 0.15  loss 1.1057  switch 0.2559  duration 0.8498  lr 1.81e-05  0.37s/step
+  dev @ step 150: loss 1.0440 (switch 0.2438, duration 0.8002), mean F1@0.5 0.6619, sigma 0.1278, dur acc 0.6573
+step    160/939  epoch 0.17  loss 1.1074  switch 0.2425  duration 0.8649  lr 1.76e-05  0.18s/step
+step    180/939  epoch 0.19  loss 1.1273  switch 0.2613  duration 0.8659  lr 1.72e-05  0.38s/step
+step    200/939  epoch 0.21  loss 1.1360  switch 0.2663  duration 0.8697  lr 1.67e-05  0.37s/step
+step    220/939  epoch 0.23  loss 1.0534  switch 0.2404  duration 0.8130  lr 1.63e-05  0.38s/step
+step    240/939  epoch 0.26  loss 1.0611  switch 0.2320  duration 0.8291  lr 1.58e-05  0.39s/step
+step    260/939  epoch 0.28  loss 1.0190  switch 0.2261  duration 0.7929  lr 1.54e-05  0.37s/step
+step    280/939  epoch 0.30  loss 1.0254  switch 0.2187  duration 0.8066  lr 1.49e-05  0.38s/step
+step    300/939  epoch 0.32  loss 1.0401  switch 0.2323  duration 0.8078  lr 1.45e-05  0.37s/step
+  dev @ step 300: loss 0.9877 (switch 0.2252, duration 0.7625), mean F1@0.5 0.6735, sigma 0.1248, dur acc 0.6715
+step    320/939  epoch 0.34  loss 1.0824  switch 0.2325  duration 0.8498  lr 1.40e-05  0.38s/step
+step    340/939  epoch 0.36  loss 1.0788  switch 0.2402  duration 0.8386  lr 1.36e-05  0.38s/step
+step    360/939  epoch 0.38  loss 1.0569  switch 0.2265  duration 0.8304  lr 1.31e-05  0.38s/step
+step    380/939  epoch 0.40  loss 0.9865  switch 0.2197  duration 0.7668  lr 1.27e-05  0.37s/step
+step    400/939  epoch 0.43  loss 1.0376  switch 0.2162  duration 0.8214  lr 1.22e-05  0.39s/step
+step    420/939  epoch 0.45  loss 1.0112  switch 0.2284  duration 0.7828  lr 1.18e-05  0.37s/step
+step    440/939  epoch 0.47  loss 1.0088  switch 0.2227  duration 0.7861  lr 1.13e-05  0.38s/step
+  dev @ step 450: loss 0.9534 (switch 0.2088, duration 0.7445), mean F1@0.5 0.6908, sigma 0.1052, dur acc 0.6799
+step    460/939  epoch 0.49  loss 1.0057  switch 0.2181  duration 0.7876  lr 1.08e-05  0.20s/step
+step    480/939  epoch 0.51  loss 0.9631  switch 0.2005  duration 0.7626  lr 1.04e-05  0.38s/step
+step    500/939  epoch 0.53  loss 0.9902  switch 0.2123  duration 0.7778  lr 9.94e-06  0.38s/step
+step    520/939  epoch 0.55  loss 1.0073  switch 0.2127  duration 0.7946  lr 9.49e-06  0.37s/step
+step    540/939  epoch 0.58  loss 0.9974  switch 0.2132  duration 0.7842  lr 9.04e-06  0.38s/step
+step    560/939  epoch 0.60  loss 0.9562  switch 0.2057  duration 0.7505  lr 8.58e-06  0.38s/step
+step    580/939  epoch 0.62  loss 0.9874  switch 0.2100  duration 0.7774  lr 8.13e-06  0.37s/step
+step    600/939  epoch 0.64  loss 1.0122  switch 0.2296  duration 0.7826  lr 7.68e-06  0.37s/step
+  dev @ step 600: loss 0.9363 (switch 0.2007, duration 0.7356), mean F1@0.5 0.7081, sigma 0.0986, dur acc 0.6794
+step    620/939  epoch 0.66  loss 0.9691  switch 0.2136  duration 0.7555  lr 7.23e-06  0.37s/step
+step    640/939  epoch 0.68  loss 1.0008  switch 0.2050  duration 0.7958  lr 6.77e-06  0.38s/step
+step    660/939  epoch 0.70  loss 1.0145  switch 0.2193  duration 0.7952  lr 6.32e-06  0.38s/step
+step    680/939  epoch 0.72  loss 0.9778  switch 0.2022  duration 0.7756  lr 5.87e-06  0.38s/step
+step    700/939  epoch 0.75  loss 0.9279  switch 0.1887  duration 0.7392  lr 5.41e-06  0.39s/step
+step    720/939  epoch 0.77  loss 1.0178  switch 0.2027  duration 0.8152  lr 4.96e-06  0.37s/step
+step    740/939  epoch 0.79  loss 0.9842  switch 0.2097  duration 0.7745  lr 4.51e-06  0.38s/step
+  dev @ step 750: loss 0.9235 (switch 0.1987, duration 0.7247), mean F1@0.5 0.7086, sigma 0.0999, dur acc 0.6842
+step    760/939  epoch 0.81  loss 0.9481  switch 0.2035  duration 0.7446  lr 4.05e-06  0.19s/step
+step    780/939  epoch 0.83  loss 0.9826  switch 0.2004  duration 0.7822  lr 3.60e-06  0.38s/step
+step    800/939  epoch 0.85  loss 0.9652  switch 0.2008  duration 0.7644  lr 3.15e-06  0.38s/step
+step    820/939  epoch 0.87  loss 1.0081  switch 0.2163  duration 0.7918  lr 2.70e-06  0.37s/step
+step    840/939  epoch 0.89  loss 0.9300  switch 0.1992  duration 0.7308  lr 2.24e-06  0.37s/step
+step    860/939  epoch 0.92  loss 0.9687  switch 0.2078  duration 0.7609  lr 1.79e-06  0.37s/step
+step    880/939  epoch 0.94  loss 0.9529  switch 0.1960  duration 0.7569  lr 1.34e-06  0.37s/step
+step    900/939  epoch 0.96  loss 0.9621  switch 0.1989  duration 0.7632  lr 8.83e-07  0.38s/step
+  dev @ step 900: loss 0.9151 (switch 0.1951, duration 0.7200), mean F1@0.5 0.7115, sigma 0.0954, dur acc 0.6855
+step    920/939  epoch 0.98  loss 0.9775  switch 0.2043  duration 0.7732  lr 4.30e-07  0.37s/step
+  dev @ step 939: loss 0.9154 (switch 0.1953, duration 0.7201), mean F1@0.5 0.7108, sigma 0.0959, dur acc 0.6857
+training finished: 939 steps in 6.6 min (0.42 s/step), 0 batches skipped for a non-finite loss, peak GPU memory [5.23, 2.84] GB
+restored the best checkpoint (step 900, dev f1_tuned 0.7305)
+
+# sweep_lam1_noweight: test split
+
+| pair | switch_rate_% | threshold | P | R | F1 | F1_at_0.5 | dur_acc | F1_macro_by_type |
+|---|---|---|---|---|---|---|---|---|
+| Arabic_eng | 12.94 | 0.45 | 0.8201 | 0.7625 | 0.7902 | 0.7871 | 0.6562 | 0.7973 |
+| Can_Eng | 12.64 | 0.35 | 0.6211 | 0.5925 | 0.6065 | 0.5649 | 0.653 | 0.6078 |
+| Chinese_eng | 10.62 | 0.4 | 0.7796 | 0.7817 | 0.7806 | 0.7795 | 0.7438 | 0.7912 |
+| French_eng | 11.04 | 0.5 | 0.8621 | 0.7593 | 0.8074 | 0.8074 | 0.7192 | 0.7939 |
+| German_Eng | 11.68 | 0.45 | 0.7669 | 0.7255 | 0.7457 | 0.744 | 0.7074 | 0.749 |
+| German_French | 10.89 | 0.5 | 0.7854 | 0.7096 | 0.7456 | 0.7456 | 0.6543 | 0.746 |
+| Hindi_eng | 23.72 | 0.35 | 0.6095 | 0.6906 | 0.6475 | 0.6191 | 0.6203 | 0.6532 |
+| Italian_eng | 10.77 | 0.55 | 0.8246 | 0.7029 | 0.7589 | 0.76 | 0.7284 | 0.752 |
+| Japanese_eng | 8.56 | 0.4 | 0.8236 | 0.8078 | 0.8156 | 0.8096 | 0.8361 | 0.8176 |
+| Korean_eng | 14.02 | 0.25 | 0.8121 | 0.8686 | 0.8394 | 0.8286 | 0.6689 | 0.8486 |
+| Malay_eng | 15.59 | 0.3 | 0.637 | 0.6826 | 0.659 | 0.6228 | 0.6254 | 0.6702 |
+| Philippines_eng | 20.33 | 0.3 | 0.464 | 0.7769 | 0.581 | 0.5129 | 0.5775 | 0.5808 |
+| Russian_eng | 12.76 | 0.5 | 0.7862 | 0.6992 | 0.7401 | 0.7401 | 0.6524 | 0.7309 |
+| Spanish_eng | 12.05 | 0.3 | 0.7585 | 0.7347 | 0.7464 | 0.7251 | 0.688 | 0.7485 |
+| Vietnamese_eng | 11.18 | 0.3 | 0.725 | 0.7219 | 0.7234 | 0.7062 | 0.717 | 0.7328 |
+
+Mean Anticipatory F1 = 0.7325, sigma = 0.0741 (min 0.581 Philippines_eng, max 0.839 Korean_eng); mean F1 at threshold 0.5 = 0.7169; duration accuracy at true switches = 0.6832; macro F1 by switch type = 0.7347.
+
+wrote /kaggle/working/runs/sweep_lam1_noweight/summary.json

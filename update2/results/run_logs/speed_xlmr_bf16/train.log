@@ -1,0 +1,27 @@
+== train.py  2026-11-10 21:40:02  out_dir = /kaggle/working/runs/speed_xlmr_bf16
+device cuda, mixed precision torch.bfloat16, torch 2.11.0+cu130
+2 pairs: Spanish_eng Hindi_eng
+conversations: train 2,000, dev 1,600 (periodic eval on 60), test 100
+training positions 106,663, switches 18,972 (17.8%), duration bins [8504, 4945, 5523]
+2,223 training windows of <= 128 subwords, 70 batches per epoch (tokenized in 1s)
+xlm-roberta-base (XLMRobertaModel, causal mask via is_decoder=True), 12 layers, hidden 768, 277.5M parameters, 277.5M trainable
+L = 1 * CE_switch + 1 * CE_duration, ignore_index = -1, switch class weights [1.0, 4.622127532958984], duration class weights [0.7436500191688538, 1.2788676023483276, 1.145029902458191]
+DataParallel over 2 GPUs
+40 optimizer steps (1 epochs x 70), warmup 2, lr 2e-05, head lr 0.0001, batch 32 x accumulation 1
+step     10/40  epoch 0.14  loss 1.8156  switch 0.6556  duration 1.1600  lr 1.58e-05  0.86s/step
+step     20/40  epoch 0.29  loss 1.6114  switch 0.5815  duration 1.0299  lr 1.05e-05  0.76s/step
+step     30/40  epoch 0.43  loss 1.5765  switch 0.5458  duration 1.0308  lr 5.26e-06  0.76s/step
+step     40/40  epoch 0.57  loss 1.5276  switch 0.5417  duration 0.9858  lr 0.00e+00  0.77s/step
+  dev @ step 40: loss 1.5157 (switch 0.5741, duration 0.9416), mean F1@0.5 0.4975, sigma 0.0421, dur acc 0.5142
+training finished: 40 steps in 0.6 min (0.83 s/step), 0 batches skipped for a non-finite loss
+
+# speed_xlmr_bf16: test split
+
+| pair | switch_rate_% | threshold | P | R | F1 | F1_at_0.5 | dur_acc | F1_macro_by_type |
+|---|---|---|---|---|---|---|---|---|
+| Hindi_eng | 24.7 | 0.55 | 0.3716 | 0.6076 | 0.4612 | 0.4563 | 0.4561 | 0.4567 |
+| Spanish_eng | 12.4 | 0.8 | 0.777 | 0.7077 | 0.7407 | 0.6703 | 0.5692 | 0.71 |
+
+Mean Anticipatory F1 = 0.6009, sigma = 0.1398 (min 0.461 Hindi_eng, max 0.741 Spanish_eng); mean F1 at threshold 0.5 = 0.5633; duration accuracy at true switches = 0.5127; macro F1 by switch type = 0.5834.
+
+wrote /kaggle/working/runs/speed_xlmr_bf16/summary.json

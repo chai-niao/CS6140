@@ -1,0 +1,27 @@
+== train.py  2026-11-10 21:42:48  out_dir = /kaggle/working/runs/speed_qwen_bf16
+device cuda, mixed precision torch.bfloat16, torch 2.11.0+cu130
+2 pairs: Spanish_eng Hindi_eng
+conversations: train 2,000, dev 1,600 (periodic eval on 60), test 100
+training positions 106,663, switches 18,972 (17.8%), duration bins [8504, 4945, 5523]
+2,782 training windows of <= 128 subwords, 174 batches per epoch (tokenized in 1s)
+Qwen/Qwen2.5-0.5B (Qwen2Model, causal by construction), 24 layers, hidden 896, 494.0M parameters, 494.0M trainable
+L = 1 * CE_switch + 1 * CE_duration, ignore_index = -1, switch class weights [1.0, 4.622127532958984], duration class weights [0.7436500191688538, 1.2788676023483276, 1.145029902458191]
+DataParallel over 2 GPUs
+40 optimizer steps (1 epochs x 87), warmup 2, lr 2e-05, head lr 0.0001, batch 16 x accumulation 2
+step     10/40  epoch 0.11  loss 1.6453  switch 0.5948  duration 1.0505  lr 1.58e-05  3.19s/step
+step     20/40  epoch 0.23  loss 1.3049  switch 0.4193  duration 0.8856  lr 1.05e-05  3.08s/step
+step     30/40  epoch 0.34  loss 1.2363  switch 0.3688  duration 0.8675  lr 5.26e-06  3.04s/step
+step     40/40  epoch 0.46  loss 1.2008  switch 0.3606  duration 0.8403  lr 0.00e+00  3.07s/step
+  dev @ step 40: loss 1.2474 (switch 0.3948, duration 0.8526), mean F1@0.5 0.6525, sigma 0.0172, dur acc 0.6167
+training finished: 40 steps in 2.1 min (3.20 s/step), 0 batches skipped for a non-finite loss
+
+# speed_qwen_bf16: test split
+
+| pair | switch_rate_% | threshold | P | R | F1 | F1_at_0.5 | dur_acc | F1_macro_by_type |
+|---|---|---|---|---|---|---|---|---|
+| Hindi_eng | 24.7 | 0.65 | 0.5986 | 0.8 | 0.6848 | 0.6395 | 0.6076 | 0.6808 |
+| Spanish_eng | 12.4 | 0.7 | 0.8307 | 0.8 | 0.815 | 0.7631 | 0.6738 | 0.7965 |
+
+Mean Anticipatory F1 = 0.7499, sigma = 0.0651 (min 0.685 Hindi_eng, max 0.815 Spanish_eng); mean F1 at threshold 0.5 = 0.7013; duration accuracy at true switches = 0.6407; macro F1 by switch type = 0.7387.
+
+wrote /kaggle/working/runs/speed_qwen_bf16/summary.json
